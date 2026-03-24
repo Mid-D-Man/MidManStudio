@@ -1,0 +1,10 @@
+{
+  "banners": [
+    {
+      "imageUrl": "https://raw.githubusercontent.com/MidManStudio/MidManStudio/main/banner_placeholder.png",
+      "linkUrl": "https://midmanstudio.itch.io",
+      "label": "Coming Soon",
+      "active": false
+    }
+  ]
+}
