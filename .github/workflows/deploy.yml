@@ -28,6 +28,18 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Ensure Project Exists
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if ! npx wrangler@3 pages project list | grep -q -w "midmanstudio"; then
+            echo "Project 'midmanstudio' not found. Creating..."
+            npx wrangler@3 pages project create midmanstudio --production-branch main
+          else
+            echo "Project 'midmanstudio' already exists."
+          fi
+
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
         with:
