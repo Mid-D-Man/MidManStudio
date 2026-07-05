@@ -1,0 +1,10 @@
+# FILE: .gitignore
+node_modules/
+.svelte-kit/
+build/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+.wrangler/
