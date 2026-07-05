@@ -1,6 +1,6 @@
 
 {
-  "name": "midmanstudio-site",
+  "name": "midmanstudio",
   "compatibility_date": "2026-07-01",
   "assets": {
     "directory": ".svelte-kit/cloudflare",
