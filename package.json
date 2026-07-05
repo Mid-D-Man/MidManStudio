@@ -1,6 +1,5 @@
-
 {
-  "name": "midmanstudio-site",
+  "name": "midmanstudio",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "deploy": "npm run build && wrangler pages deploy .svelte-kit/cloudflare --project-name=midmanstudio-site"
+    "deploy": "npm run build && wrangler pages deploy .svelte-kit/cloudflare --project-name=midmanstudio"
   },
   "devDependencies": {
     "@sveltejs/adapter-cloudflare": "^7.0.0",
@@ -19,6 +18,6 @@
     "svelte-check": "^4.1.0",
     "typescript": "^5.7.0",
     "vite": "^6.0.0",
-    "wrangler": "^3.99.0"
+    "wrangler": "^4.0.0"
   }
-  }
+}
