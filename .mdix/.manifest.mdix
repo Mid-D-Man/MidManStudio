@@ -1,0 +1,48 @@
+@CONFIG(
+  version    -> "1.0.0"
+  generated  -> "2026-07-05T15:39:37Z"
+  debug_mode -> "off"
+)
+
+@DATA(
+  template      = ".mdix/project_structure/project_structure.mdix"
+  template_hash = "a87b9b27eac8"
+  last_run      = "2026-07-05T15:39:37Z"
+  new_this_run  = 27
+  overridden    = 1
+  skipped       = 0
+  deleted       = 0
+  renamed       = 0
+  moved         = 0
+  updated       = 0
+
+  created_files::
+    ".gitignore"
+    "README.md"
+    "package.json"
+    "src/app.d.ts"
+    "src/app.html"
+    "src/lib/components/About.svelte"
+    "src/lib/components/ContactFooter.svelte"
+    "src/lib/components/CoreTech.svelte"
+    "src/lib/components/Hero.svelte"
+    "src/lib/components/MediaGallery.svelte"
+    "src/lib/components/NavBar.svelte"
+    "src/lib/components/Projects.svelte"
+    "src/lib/components/UnityPackages.svelte"
+    "src/lib/data/ecosystem.ts"
+    "src/lib/data/packages.ts"
+    "src/lib/data/projects.ts"
+    "src/lib/styles/base.css"
+    "src/lib/styles/responsive.css"
+    "src/lib/styles/tokens.css"
+    "src/routes/+layout.svelte"
+    "src/routes/+page.svelte"
+    "static/media/images/.gitkeep"
+    "static/media/videos/.gitkeep"
+    "static/robots.txt"
+    "svelte.config.js"
+    "tsconfig.json"
+    "vite.config.ts"
+    "wrangler.jsonc"
+)
