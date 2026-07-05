@@ -1,0 +1,78 @@
+// FILE: .mdix/project_structure/project_structure.mdix
+// Brought to u by MidManStudio
+// Scaffolds the MidManStudio marketing site — SvelteKit + Cloudflare Pages.
+// Structure only. Real file content is authored separately, not embedded here.
+
+@CONFIG(
+  version    -> "1.0.0"
+  author     -> "MidManStudio"
+  features   -> "quickfuncs,data"
+  debug_mode -> "off"
+)
+
+@QUICKFUNCS(
+  ~f<object>(name, ext)   { return { name = name, ext = ext, content = "" } }
+  ~gitkeep<object>()      { return { name = ".gitkeep", ext = "", content = "" } }
+  ~hidden<object>(seg)    { return { segment = seg } }
+)
+
+@DATA(
+  project_name = "midmanstudio-site"
+  description  = "MidManStudio — game dev studio site, SvelteKit on Cloudflare Pages"
+  author       = "MidManStudio"
+  github_org   = "MidManStudio"
+
+  hidden_dirs::
+    hidden("github")
+
+  post_hooks::
+    "echo 'Structure generated. Next: fill in real file content, then npm install && npm run dev.'"
+
+  root::
+    f("package",        "json")
+    f("svelte.config",  "js")
+    f("vite.config",    "ts")
+    f("tsconfig",       "json")
+    f("wrangler",       "jsonc")
+    f(".gitignore",     "")
+    f("README",         "md")
+
+  src::
+    f("app", "html")
+    f("app", "d.ts")
+
+  src.routes::
+    f("+layout", "svelte")
+    f("+page",   "svelte")
+
+  src.lib.components::
+    f("NavBar",         "svelte")
+    f("Hero",           "svelte")
+    f("UnityPackages",  "svelte")
+    f("CoreTech",       "svelte")
+    f("MediaGallery",   "svelte")
+    f("Projects",       "svelte")
+    f("About",          "svelte")
+    f("ContactFooter",  "svelte")
+
+  src.lib.styles::
+    f("tokens",     "css")
+    f("base",       "css")
+    f("responsive", "css")
+
+  src.lib.data::
+    f("packages",  "ts")
+    f("ecosystem", "ts")
+    f("projects",  "ts")
+
+  static.media.images::
+    gitkeep()
+
+  static.media.videos::
+    gitkeep()
+
+  static::
+    f("robots", "txt")
+
+  
+)
