@@ -1,6 +1,36 @@
+<!-- FILE: src/app.html -->
 <!DOCTYPE html>
-<html>
-<head><title>app</title></head>
-<body>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#04060c" />
+  <meta name="description" content="MidManStudio — indie game development studio. Unity tooling, custom engine tech, and interactive experiences." />
+  <meta property="og:title" content="MidManStudio" />
+  <meta property="og:description" content="Indie game development studio — Unity packages, custom Rust-powered engine tech, and shipped experiences." />
+  <meta property="og:type" content="website" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #04060c;
+      color: #eef2fb;
+    }
+  </style>
+
+  %sveltekit.head%
+</head>
+<body data-sveltekit-preload-data="hover">
+  <div style="display: contents">%sveltekit.body%</div>
 </body>
-</html>
+  </html>
