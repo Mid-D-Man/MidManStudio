@@ -1,1 +1,122 @@
-/* Auto-generated stub */
+/* =============================================================================
+   FILE: src/lib/styles/responsive.css
+   Breakpoint system. Mobile-first: base styles target small screens, each
+   query below widens the layout. Components use these same breakpoints in
+   their own scoped <style> blocks for section-specific grid changes.
+
+   Breakpoints:
+     480px  — large phone
+     768px  — tablet portrait
+     1024px — tablet landscape / small laptop
+     1280px — desktop
+     1536px — wide desktop
+   ============================================================================= */
+
+/* ---------- Base (mobile, <480px) ---------- */
+
+.container {
+  padding-inline: var(--container-pad);
+}
+
+.section {
+  padding-block: var(--sp-5);
+}
+
+.section-title {
+  font-size: var(--fs-2xl);
+}
+
+.hero-cta-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.nav-links {
+  display: none;
+}
+
+/* ---------- ≥480px ---------- */
+@media (min-width: 480px) {
+  .hero-cta-row {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* ---------- ≥768px ---------- */
+@media (min-width: 768px) {
+  .section {
+    padding-block: var(--sp-6);
+  }
+
+  .section-title {
+    font-size: var(--fs-3xl);
+  }
+
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .media-gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ---------- ≥1024px ---------- */
+@media (min-width: 1024px) {
+  .nav-links {
+    display: flex;
+  }
+
+  .nav-burger {
+    display: none;
+  }
+
+  .section {
+    padding-block: var(--sp-7);
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .about-grid {
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+
+  .media-gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ---------- ≥1280px ---------- */
+@media (min-width: 1280px) {
+  .section-title {
+    font-size: var(--fs-4xl);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ---------- ≥1536px ---------- */
+@media (min-width: 1536px) {
+  :root {
+    --container-max: 1400px;
+  }
+}
+
+/* ---------- Shared responsive grid utilities ---------- */
+
+.grid-2, .grid-3, .grid-4 {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: 1fr;
+}
+
+.media-gallery-grid {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: 1fr;
+  }
