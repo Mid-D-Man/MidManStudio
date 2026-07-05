@@ -1,9 +1,5 @@
-
 {
   "name": "midmanstudio",
   "compatibility_date": "2026-07-01",
-  "assets": {
-    "directory": ".svelte-kit/cloudflare",
-    "binding": "ASSETS"
-  }
+  "pages_build_output_dir": ".svelte-kit/cloudflare"
 }
