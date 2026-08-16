@@ -43,29 +43,69 @@ export const projects: Project[] = [
     status: 'in-progress'
   },
   {
-    id: 'mid-qr',
+    id: 'mpx',
     number: '03',
+    title: 'MPX',
+    subtitle: 'Lossless Image Format',
+    description:
+      'A lossless image codec built directly on top of MBFA\'s fold-compression — the same ' +
+      'research applied to raster images instead of general-purpose data.',
+    tech: ['Rust', 'Image Format', 'Compression'],
+    link: 'https://github.com/Mid-D-Man/mpx',
+    linkLabel: 'GitHub',
+    status: 'completed'
+  },
+  {
+    id: 'mdix-scaffold',
+    number: '04',
+    title: 'mdix-scaffold',
+    subtitle: 'Declarative Project Scaffolding',
+    description:
+      'Idempotent project-structure generator driven entirely by DixScript templates — define ' +
+      'a layout once, run it as a GitHub Action or a local CLI command. Only new entries get ' +
+      'written; existing files are never touched by default.',
+    tech: ['Rust', 'DixScript', 'GitHub Actions'],
+    link: 'https://github.com/Mid-D-Man/mdix-scaffold',
+    linkLabel: 'GitHub',
+    status: 'completed'
+  },
+  {
+    id: 'mid-qr',
+    number: '05',
     title: 'mid-qr',
     subtitle: 'Full QR Code Ecosystem',
     description:
       'Rust/WASM core with a TypeScript/npm wrapper and a Blazor NuGet package, covering 14 ' +
       'content types — vCard, WhatsApp, Instagram, Telegram, and more.',
     tech: ['Rust', 'WASM', 'Blazor', 'TypeScript'],
-    link: 'https://github.com/Mid-D-Man',
+    link: 'https://github.com/MidManStudio/mid_qr_code_lib',
     linkLabel: 'GitHub',
     status: 'completed'
   },
   {
+    id: 'midman-pulse',
+    number: '06',
+    title: 'MidMan Pulse',
+    subtitle: 'Automated Editorial Feed',
+    description:
+      'AI-driven content pipeline — scrapes sources across a wide spread of categories, then ' +
+      'generates a daily feed and personalized posts without a human touching each one.',
+    tech: ['SvelteKit', 'Cloudflare', 'AI'],
+    link: 'PLACEHOLDER_LIVE_URL', // TODO(Mid): confirm the live pages.dev / custom domain
+    linkLabel: 'Visit Site',
+    status: 'completed'
+  },
+  {
     id: 'vantagesolutions',
-    number: '04',
+    number: '07',
     title: 'VantageSolutions',
     subtitle: 'Git-CMS Marketing Site',
     description:
       'SvelteKit site with articles pulled from a JSON file in the repo via raw.githubusercontent.com — ' +
       'no backend, no redeploy needed for content updates thanks to Fastly CDN caching.',
     tech: ['SvelteKit', 'Git-CMS'],
-    link: 'https://github.com/Mid-D-Man',
-    linkLabel: 'GitHub',
+    link: 'PLACEHOLDER_LIVE_URL', // TODO(Mid): confirm the live pages.dev / custom domain
+    linkLabel: 'Visit Site',
     status: 'completed'
   }
 ];

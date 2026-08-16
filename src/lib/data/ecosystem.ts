@@ -20,10 +20,12 @@ export const ecosystemItems: EcosystemItem[] = [
     tagline: 'Config · code · encryption, one format',
     description:
       'A data interchange format (.mdix) combining configuration, compile-time functions, ' +
-      'built-in AES-256 encryption, and automatic compression. Rust runtime with full ' +
-      'multi-language bindings — C, C++, Java, Lua, Python, WASM/npm, and Odin — plus a ' +
-      'VS Code and IntelliJ LSP.',
-    tags: ['Rust', 'Language Design', 'LSP', 'Multi-language Bindings'],
+      'built-in AES-256 encryption, and automatic compression. Core Rust runtime published to ' +
+      'crates.io, with published bindings for Node/WASM, Python, and C#, plus a CLI and LSP. ' +
+      'Go, Java, Lua, PHP, and Odin bindings are code-complete and shipping soon. Also ships ' +
+      'first-class Unity integration — asset import, localization, and WebGL support — straight ' +
+      'from the same repo.',
+    tags: ['Rust', 'Language Design', 'LSP', 'Multi-language Bindings', 'Published'],
     link: 'https://github.com/Mid-D-Man/DixScript-Rust',
     linkLabel: 'GitHub',
     accent: 'royal'
@@ -35,9 +37,10 @@ export const ecosystemItems: EcosystemItem[] = [
     description:
       'A Rust game engine workspace built from the ground up. mid-math targets SSE2, AVX2, ' +
       'AVX-512, NEON, and WASM SIMD128 with scalar fallback — the same math running whether ' +
-      "it's compiled for a phone or a server. mid-common ports parts of Blender's blenlib string subsystem.",
+      "it's compiled for a phone or a server — and is feature-complete. mid-common ports parts " +
+      "of Blender's blenlib string subsystem; the rest of the workspace is under active construction.",
     tags: ['Rust', 'SIMD', 'NEON', 'AVX-512', 'WASM'],
-    link: 'https://github.com/Mid-D-Man',
+    link: 'https://github.com/Mid-D-Man/mid-engine',
     linkLabel: 'GitHub',
     accent: 'cyan'
   },
@@ -48,9 +51,10 @@ export const ecosystemItems: EcosystemItem[] = [
     description:
       'A full vector graphics rendering format with a custom binary format and DixScript ' +
       'source, applying Grease Pencil-derived rendering patterns: dual-buffer OIT compositing, ' +
-      'ping-pong FBOs, SMAA, and Halton-sequence supersampling.',
+      'ping-pong FBOs, SMAA, and Halton-sequence supersampling. Under active development, with ' +
+      'the core rendering pipeline already working.',
     tags: ['Rust', 'Rendering', 'Vector Graphics', 'Binary Format'],
-    link: 'https://github.com/Mid-D-Man',
+    link: 'https://github.com/Mid-D-Man/msx',
     linkLabel: 'GitHub',
     accent: 'crimson'
   },
