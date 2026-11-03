@@ -1,3 +1,19 @@
+// Brought to u by MidManStudio
+// FILE: .mdix/replacements/replacements.mdix
+
+@CONFIG(
+  version    -> "1.0.0"
+  features   -> "quickfuncs,data"
+  debug_mode -> "off"
+)
+
+@QUICKFUNCS(
+  ~target<object>(_name, _path) { return { name = _name, path = _path } }
+)
+
 @DATA(
   target_root = "."
+
+  overrides::
+    target("README.md", "README.md")
 )
