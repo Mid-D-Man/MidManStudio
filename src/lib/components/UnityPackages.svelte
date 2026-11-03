@@ -2,6 +2,12 @@
 <script lang="ts">
   import { unityPackages } from '$lib/data/packages';
   import { reveal } from '$lib/actions/reveal';
+
+  const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+  const total = unityPackages.length;
+  const shipping = unityPackages.filter((p) => p.status === 'shipping').length;
+  const inDev = total - shipping;
+  const word = (n: number) => words[n] ?? String(n);
 </script>
 
 <section id="packages" class="section">
@@ -11,8 +17,9 @@
       Tools other <em>developers ship with</em>
     </h2>
     <p class="section-intro reveal" use:reveal>
-      Three UPM packages published under the <code>com.midmanstudio</code> scope —
-      built for real projects first, released as reusable packages second.
+      {word(total)} UPM packages under the <code>com.midmanstudio</code> scope —
+      {word(shipping)} shipping, {word(inDev)} in active development. Built for real projects
+      first, released as reusable packages second.
     </p>
 
     <div class="packages-list">
@@ -26,9 +33,20 @@
               <h3 class="package-name">{pkg.name}</h3>
               <p class="package-scope">{pkg.scope}</p>
             </div>
-            <div class="media-slot package-media">
-              <span class="media-slot__label">Screenshot / GIF</span>
-            </div>
+            {#if pkg.media}
+              <div class="media-slot package-media" class:package-media--filled={!!pkg.media.src}>
+                {#if pkg.media.src}
+                  <img
+                    src={pkg.media.src}
+                    alt={pkg.media.alt ?? `${pkg.name} in action`}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                {:else}
+                  <span class="media-slot__label">{pkg.media.label ?? 'Image · coming soon'}</span>
+                {/if}
+              </div>
+            {/if}
           </div>
 
           <p class="package-tagline">{pkg.tagline}</p>
@@ -72,6 +90,14 @@
 
   .package-media {
     width: 100%;
+  }
+
+  .package-media--filled {
+    background: var(--void-800);
+  }
+
+  .package-media img {
+    object-fit: contain;
   }
 
   .package-name {

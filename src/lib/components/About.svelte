@@ -11,7 +11,7 @@
   const focus = [
     { label: 'Unity / C#', level: 95 },
     { label: 'Rust', level: 85 },
-    { label: 'Systems & SIMD', level: 78 },
+    { label: 'Systems Programming', level: 78 },
     { label: 'Multiplayer / NGO', level: 80 },
     { label: 'Language & Tooling Design', level: 82 }
   ];

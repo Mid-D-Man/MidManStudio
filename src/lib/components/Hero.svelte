@@ -1,6 +1,6 @@
 <!-- FILE: src/lib/components/Hero.svelte -->
 <script lang="ts">
-  const techTags = ['Unity', 'Rust', 'C#', 'SIMD', 'NGO', 'WASM'];
+  const techTags = ['Unity', 'Rust', 'C#', 'NGO', 'WASM'];
 </script>
 
 <section id="hero" class="hero">
@@ -22,7 +22,7 @@
 
     <p class="hero-desc">
       Unity packages, a Rust-powered engine core, and shipped multiplayer
-      systems — built by one studio, from the SIMD math up to the game feel.
+      systems — built by one studio, from the math up to the game feel.
     </p>
 
     <div class="hero-cta-row">

@@ -1,41 +1,14 @@
 <!-- FILE: src/lib/components/MediaGallery.svelte -->
 <script lang="ts">
   import { reveal } from '$lib/actions/reveal';
+  import { mediaItems, mediaFilters, type MediaFilterId } from '$lib/data/media';
 
-  // Placeholder gallery items. To swap in real media:
-  //   - image: put the file in /static/media/images/ and set `src` to
-  //            "/media/images/your-file.jpg", then render <img src={item.src} alt={item.alt} />
-  //   - video: put the file in /static/media/videos/ and render
-  //            <video src="/media/videos/your-file.mp4" poster={item.src} muted loop playsinline controls />
-  // The .media-slot / .media-slot__label styling (base.css) keeps working either way —
-  // just replace the placeholder <span> with the real <img>/<video> tag.
-  type Kind = 'screenshot' | 'gameplay' | 'concept-art';
+  // Content lives in $lib/data/media.ts — add images, GIFs and clips there.
+  let active = $state<MediaFilterId>('all');
 
-  interface MediaItem {
-    id: string;
-    title: string;
-    kind: Kind;
-  }
-
-  const items: MediaItem[] = [
-    { id: 'm1', title: 'Projectile System — reconciliation demo', kind: 'gameplay' },
-    { id: 'm2', title: 'Netcode lobby — LAN discovery', kind: 'gameplay' },
-    { id: 'm3', title: 'Hierarchy Arranger in action', kind: 'screenshot' },
-    { id: 'm4', title: 'MSX vector render — dual-buffer OIT', kind: 'screenshot' },
-    { id: 'm5', title: 'Concept pass — enemy silhouette set', kind: 'concept-art' },
-    { id: 'm6', title: 'Auto Reference — fuzzy matcher UI', kind: 'screenshot' }
-  ];
-
-  const filters: { id: Kind | 'all'; label: string }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'gameplay', label: 'Gameplay' },
-    { id: 'screenshot', label: 'Screenshots' },
-    { id: 'concept-art', label: 'Concept Art' }
-  ];
-
-  let active = $state<Kind | 'all'>('all');
-
-  const visible = $derived(active === 'all' ? items : items.filter((i) => i.kind === active));
+  const visible = $derived(
+    active === 'all' ? mediaItems : mediaItems.filter((i) => i.kind === active)
+  );
 </script>
 
 <section id="showcase" class="section">
@@ -45,16 +18,16 @@
       Screens, clips, <em>and process</em>
     </h2>
     <p class="section-intro reveal" use:reveal>
-      Gameplay captures, editor tooling in action, and concept work. Slots below are
-      wired up and ready — drop images into <code>/static/media/images</code> and
-      clips into <code>/static/media/videos</code>.
+      Gameplay captures, editor tooling in action, and the DixScript toolchain at work.
+      Tap any image to open it full size.
     </p>
 
-    <div class="gallery-filters reveal" use:reveal>
-      {#each filters as f (f.id)}
+    <div class="gallery-filters reveal" use:reveal role="group" aria-label="Filter the showcase">
+      {#each mediaFilters as f (f.id)}
         <button
           class="filter-chip"
           class:active={active === f.id}
+          aria-pressed={active === f.id}
           onclick={() => (active = f.id)}
         >
           {f.label}
@@ -64,8 +37,37 @@
 
     <div class="media-gallery-grid">
       {#each visible as item, i (item.id)}
-        <figure class="media-slot gallery-item reveal" use:reveal style="transition-delay: {i * 60}ms">
-          <span class="media-slot__label">{item.kind === 'gameplay' ? 'Video' : 'Image'}</span>
+        <figure class="gallery-item reveal" use:reveal style="transition-delay: {(i % 3) * 80}ms">
+          <div class="media-slot gallery-media" class:gallery-media--filled={!!item.src}>
+            {#if item.src && item.type === 'video'}
+              <!-- svelte-ignore a11y_media_has_caption -->
+              <video
+                src={item.src}
+                poster={item.poster}
+                aria-label={item.alt ?? item.title}
+                muted
+                loop
+                playsinline
+                controls
+                preload="metadata"
+              ></video>
+            {:else if item.src}
+              <a href={item.src} target="_blank" rel="noopener noreferrer" class="gallery-link">
+                <img
+                  src={item.src}
+                  alt={item.alt ?? item.title}
+                  width={item.width}
+                  height={item.height}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </a>
+            {:else}
+              <span class="media-slot__label">
+                {item.type === 'video' ? 'Video' : item.type === 'gif' ? 'GIF' : 'Image'} · coming soon
+              </span>
+            {/if}
+          </div>
           <figcaption class="gallery-caption">{item.title}</figcaption>
         </figure>
       {/each}
@@ -106,21 +108,33 @@
   }
 
   .gallery-item {
+    display: flex;
     flex-direction: column;
-    gap: var(--sp-2);
+    gap: var(--sp-1);
     margin: 0;
   }
 
+  /* Real media: solid backdrop instead of the striped placeholder, and show the
+     whole frame (editor screenshots have UI at every edge, so no cropping). */
+  .gallery-media--filled {
+    background: var(--void-800);
+  }
+
+  .gallery-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .gallery-media img,
+  .gallery-media video {
+    display: block;
+    object-fit: contain;
+  }
+
   .gallery-caption {
-    position: absolute;
-    left: var(--sp-2);
-    bottom: var(--sp-2);
-    right: var(--sp-2);
     font-size: var(--fs-sm);
-    color: var(--ink-100);
-    background: rgba(4, 6, 12, 0.7);
-    padding: 0.4em 0.7em;
-    border-radius: 8px;
-    z-index: 1;
+    color: var(--ink-300);
+    line-height: 1.4;
   }
 </style>

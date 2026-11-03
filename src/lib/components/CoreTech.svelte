@@ -12,7 +12,7 @@
     </h2>
     <p class="section-intro reveal" use:reveal>
       The Unity packages sit on top of a homegrown Rust stack — simulation cores,
-      SIMD math, a custom scripting language, and a vector graphics engine, all
+      a math library, a custom scripting language, and a vector graphics engine, all
       built in-house rather than bolted on from a marketplace.
     </p>
 

@@ -1,6 +1,18 @@
 // FILE: src/lib/data/packages.ts
-// Unity packages published under the com.midmanstudio scope.
+// Unity packages under the com.midmanstudio scope.
 // Source: MidManStudio_Unity monorepo (packages/).
+//
+// `media` is optional: only a card that has a media field gets a screenshot / GIF slot.
+// Leave it off for packages with nothing visual to show. To fill the slot later, add `src`
+// (a file under static/media/images/, e.g. '/media/images/packages/projectile.gif').
+
+export interface PackageMedia {
+  /** Image or GIF path under static/media/. Omit to show a "coming soon" slot. */
+  src?: string;
+  alt?: string;
+  /** Placeholder text shown while there is no `src`. */
+  label?: string;
+}
 
 export interface UnityPackage {
   id: string;
@@ -12,6 +24,7 @@ export interface UnityPackage {
   tech: string[];
   status: 'shipping' | 'active-dev';
   repoPath: string;
+  media?: PackageMedia;
 }
 
 export const unityPackages: UnityPackage[] = [
@@ -21,18 +34,36 @@ export const unityPackages: UnityPackage[] = [
     scope: 'com.midmanstudio.utilities',
     tagline: 'The foundation every project is built on',
     description:
-      'Core utilities used across every MidManStudio Unity project — tick dispatcher, ' +
-      'logger, timers, object pools, audio limiting, FX, scene management, and UI state. ' +
+      'Core utilities used across every MidManStudio Unity project — tick dispatcher, logger, ' +
+      'timers, object and particle pools, singletons, an event bus, scene management, and UI state. ' +
       'Includes an Auto Reference system with fuzzy name matching and a Hierarchy Arranger ' +
       'with ten arrangement modes.',
     highlights: [
-      'Auto Reference — fuzzy matcher (Levenshtein + token Jaccard) wires up component refs automatically',
+      'Auto Reference — fuzzy name matching wires up component references automatically',
       'Hierarchy Arranger — 10 arrangement modes for keeping scenes clean',
-      'Tick dispatcher, pooled timers, and a native audio limiter backed by Rust'
+      'Zero-allocation tick dispatcher, timers, and a typed event bus'
     ],
-    tech: ['Unity', 'C#', 'Rust FFI', 'Editor Tooling'],
+    tech: ['Unity', 'C#', 'Editor Tooling'],
     status: 'shipping',
     repoPath: 'packages/com.midmanstudio.utilities'
+  },
+  {
+    id: 'audio',
+    name: 'Audio',
+    scope: 'com.midmanstudio.audio',
+    tagline: 'Music, SFX, and a limiter for the final mix',
+    description:
+      'Audio for Unity — music with crossfade and pitch glide, SFX played by string id or ' +
+      'generated enum, audio categories with mixer groups, pooled voices and spatial audio ' +
+      'objects, and a peak limiter on the final mix.',
+    highlights: [
+      'SFX by generated enum — an editor generator keeps the ids stable',
+      'Pooled voices that play clips without allocating',
+      'Peak limiter — Rust DSP on desktop and mobile, C# fallback on WebGL'
+    ],
+    tech: ['Unity', 'C#', 'Rust DSP'],
+    status: 'active-dev',
+    repoPath: 'packages/com.midmanstudio.audio'
   },
   {
     id: 'netcode',
@@ -53,22 +84,42 @@ export const unityPackages: UnityPackage[] = [
     repoPath: 'packages/com.midmanstudio.netcode'
   },
   {
+    id: 'patterns',
+    name: 'Patterns',
+    scope: 'com.midmanstudio.patterns',
+    tagline: 'Design patterns as small, engine-independent building blocks',
+    description:
+      'Generic design-pattern building blocks for Unity — command history with undo/redo, ' +
+      'state machines, event queues, dependency injection, broker chains with stat modifiers, ' +
+      'spatial partitioning, a fixed-step game loop, and more. The runtime has no engine ' +
+      'references, so it also runs and tests outside Unity.',
+    highlights: [
+      'Command — undo/redo history with grouping, merging, and composite commands',
+      'Broker Chain — priority-ordered handlers with a stat sheet for buffs and modifiers',
+      'No dependencies; the runtime assembly never references the engine'
+    ],
+    tech: ['Unity', 'C#', 'Design Patterns'],
+    status: 'active-dev',
+    repoPath: 'packages/com.midmanstudio.patterns'
+  },
+  {
     id: 'projectilesystem',
     name: 'Projectile System',
     scope: 'com.midmanstudio.projectilesystem',
-    tagline: 'Server-authoritative, SIMD-simulated, 2D-first',
+    tagline: 'Server-authoritative, Rust-simulated, 2D-first',
     description:
       'High-performance server-authoritative projectile system with a Rust simulation core. ' +
       'Firing client handles the visual locally, the server runs the authoritative simulation, ' +
       'and every other client receives state over RPC — with reconciliation and snapshot-based ' +
       'velocity extrapolation for non-linear movement types.',
     highlights: [
-      'Rust core (projectile_core) — SSE2 SIMD, 4-wide batched simulation',
+      'Rust core (projectile_core) — batched simulation, called from Unity over FFI',
       'Primarily 2D, with a 3D path kept as a reference implementation',
-      'RequireOwnership = false bridge for physics projectiles, raycast sender-exclusion for no double-fires'
+      'Raycast, Rust-simulated, and physics-based projectiles with configurable firing patterns'
     ],
-    tech: ['Unity', 'Rust', 'NGO', 'SIMD'],
+    tech: ['Unity', 'Rust', 'NGO'],
     status: 'active-dev',
-    repoPath: 'packages/com.midmanstudio.projectilesystem'
+    repoPath: 'packages/com.midmanstudio.projectilesystem',
+    media: { label: 'GIF · coming soon' }
   }
 ];
