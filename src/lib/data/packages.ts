@@ -1,6 +1,7 @@
 // FILE: src/lib/data/packages.ts
 // Unity packages under the com.midmanstudio scope.
-// Source: MidManStudio_Unity monorepo (packages/).
+// Source: MidManStudio_Unity monorepo (packages/), plus MDIX Studio (com.midmanstudio.mdix),
+// which lives in the DixScript-Rust repo — its repoPath is prefixed with that repo's name.
 //
 // `media` is optional: only a card that has a media field gets a screenshot / GIF slot.
 // Leave it off for packages with nothing visual to show. To fill the slot later, add `src`
@@ -28,6 +29,28 @@ export interface UnityPackage {
 }
 
 export const unityPackages: UnityPackage[] = [
+  {
+    id: 'mdix-studio',
+    name: 'MDIX Studio',
+    scope: 'com.midmanstudio.mdix',
+    tagline: 'More powerful than PlayerPrefs, lighter than SQLite',
+    description:
+      'The DixScript runtime for Unity, with an in-editor studio. Load typed, encrypted .mdix ' +
+      'data straight into your classes, and edit it in MDIX Studio — Explorer, Editor, Search, ' +
+      'and Templates tabs with live language-server diagnostics.',
+    highlights: [
+      '.mdix files import as Unity assets — open them in MDIX Studio or generate ScriptableObjects',
+      'LoadAs<T> fills typed classes, lists, and dictionaries from a .mdix file',
+      'Built-in encryption and LINQ-style queries'
+    ],
+    tech: ['Unity', 'C#', 'DixScript', 'Editor Tooling'],
+    status: 'shipping',
+    repoPath: 'DixScript-Rust/com.midmanstudio.mdix',
+    media: {
+      src: '/media/images/mdix-studio/preview-1.png',
+      alt: 'MDIX Studio Explorer tab showing typed values, an items array as a table and a nested object.'
+    }
+  },
   {
     id: 'utilities',
     name: 'Utilities',

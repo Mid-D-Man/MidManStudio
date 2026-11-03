@@ -1,9 +1,10 @@
 <!-- FILE: src/lib/components/About.svelte -->
 <script lang="ts">
   import { reveal } from '$lib/actions/reveal';
+  import { unityPackages } from '$lib/data/packages';
 
   const stats = [
-    { value: '3', label: 'Unity Packages' },
+    { value: String(unityPackages.length), label: 'Unity Packages' },
     { value: '5+', label: 'Rust Systems' },
     { value: '1', label: 'Studio, One Founder' }
   ];

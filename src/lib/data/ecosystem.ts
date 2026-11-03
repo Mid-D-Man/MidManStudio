@@ -31,13 +31,13 @@ export const ecosystemItems: EcosystemItem[] = [
     accent: 'royal'
   },
   {
-    id: 'mid-engine',
-    name: 'mid-engine / mid-math',
+    id: 'mid-math',
+    name: 'mid-math',
     tagline: 'SIMD math across every architecture',
     description:
-      'The math layer of mid-engine, a Rust game engine built from the ground up — vectors, ' +
-      'matrices, quaternions, curves, noise, and color. SIMD-accelerated on SSE2, AVX2, AVX-512, ' +
-      'NEON, and WASM SIMD128 with a scalar fallback, so the same code runs on a phone or a server.',
+      'Part of a larger Rust game-tech ecosystem — a math library with vectors, matrices, ' +
+      'quaternions, curves, noise, and color. SIMD-accelerated on SSE2, AVX2, AVX-512, NEON, and ' +
+      'WASM SIMD128 with a scalar fallback, so the same code runs on a phone or a server.',
     tags: ['Rust', 'SIMD', 'NEON', 'AVX-512', 'WASM'],
     link: 'https://github.com/Mid-D-Man/mid-engine',
     linkLabel: 'GitHub',
@@ -46,7 +46,7 @@ export const ecosystemItems: EcosystemItem[] = [
   {
     id: 'msx',
     name: 'MSX',
-    tagline: 'MidStroke eXchange — vector graphics engine',
+    tagline: 'MidStroke eXtension — vector graphics engine',
     description:
       'A vector graphics rendering format with a custom binary format and DixScript source. ' +
       'Under active development, with the core rendering pipeline already working.',

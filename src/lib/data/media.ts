@@ -43,7 +43,7 @@ export const mediaItems: MediaItem[] = [
   // ---- Gameplay ----
   {
     id: 'game-map',
-    title: 'Game map — top-down debug view',
+    title: 'Projectile System test scene — arena overview',
     kind: 'gameplay',
     src: `${IMG}/game/map-preview.png`,
     alt: 'Top-down debug view of a walled arena with colour-coded floor and wall surfaces and several cylindrical obstacles.',
@@ -52,7 +52,7 @@ export const mediaItems: MediaItem[] = [
   },
   {
     id: 'game-weapon',
-    title: 'First-person prototype — weapon view',
+    title: 'Projectile System test scene — weapon view',
     kind: 'gameplay',
     src: `${IMG}/game/stuff.jpg`,
     alt: 'First-person view of a shotgun in a corridor with yellow checkered walls, an FPS counter in the corner and an on-screen fire button.',
@@ -61,7 +61,7 @@ export const mediaItems: MediaItem[] = [
   },
   {
     id: 'game-wide',
-    title: 'First-person prototype — wide view',
+    title: 'Projectile System test scene — in-game view',
     kind: 'gameplay',
     src: `${IMG}/game/basic.jpg`,
     alt: 'In-game view with a health bar and green orb in the HUD, a blue capsule character in the distance and a purple textured block on a yellow checkered floor.',

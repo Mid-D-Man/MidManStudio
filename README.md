@@ -20,12 +20,12 @@ Most updates are data edits — no component changes needed.
 
 | File | What it drives |
 | --- | --- |
-| `src/lib/data/packages.ts` | Unity package cards (utilities, audio, netcode, patterns, projectile system). Only cards with a `media` field get a screenshot / GIF slot |
-| `src/lib/data/ecosystem.ts` | "Core Tech" cards (DixScript, mid-engine / mid-math, MSX, projectile_core) |
+| `src/lib/data/packages.ts` | Unity package cards (MDIX Studio, utilities, audio, netcode, patterns, projectile system). Only cards with a `media` field get a screenshot / GIF slot. MDIX Studio's source lives in the DixScript-Rust repo; the rest are in MidManStudio_Unity |
+| `src/lib/data/ecosystem.ts` | "Core Tech" cards (DixScript, mid-math, MSX, projectile_core) |
 | `src/lib/data/projects.ts` | Shipped projects |
 | `src/lib/data/media.ts` | Showcase gallery (images, GIFs, clips) |
 
-SIMD is deliberately attributed to **mid-math only** (the `mid-engine` entry in `ecosystem.ts`) — keep it out of the other cards.
+SIMD is deliberately attributed to **mid-math only** (the `mid-math` card in `ecosystem.ts`) — keep it out of the other cards.
 
 ## Adding showcase media
 
@@ -35,7 +35,7 @@ Everything is declared in `src/lib/data/media.ts`; files go under `static/media/
 - **Video** — drop the file in `static/media/videos/`, then add an entry with `type: 'video'`, `src: '/media/videos/<file>.mp4'` and an optional `poster`.
 - An entry with **no `src`** renders as a "coming soon" slot — fill it in later by adding the `src`.
 
-Current folders: `game/`, `mdix-studio/` (the Unity editor tool), `mdix-lsp/` (DixScript in VS Code).
+Current folders: `game/` (Projectile System test scene), `mdix-studio/` (the Unity editor tool), `mdix-lsp/` (DixScript in VS Code).
 
 ## Deploy
 
