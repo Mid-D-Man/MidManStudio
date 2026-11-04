@@ -31,7 +31,7 @@
 <header class="nav" class:nav--scrolled={scrolled}>
   <div class="container nav-inner">
     <a href="#hero" class="nav-logo" onclick={closeMenu}>
-      <span class="logo-mark">M</span>
+      <img class="logo-mark" src="/brand/logo-mark.png" alt="" width="34" height="34" />
       <span class="logo-text">MidMan<em>Studio</em></span>
     </a>
 
@@ -93,16 +93,10 @@
   }
 
   .logo-mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     width: 34px;
     height: 34px;
-    border-radius: 8px;
-    background: var(--grad-brand);
-    color: var(--void-950);
-    font-weight: 900;
-    box-shadow: var(--glow-cyan);
+    object-fit: contain;
+    filter: drop-shadow(0 0 6px rgba(57, 255, 20, 0.4));
   }
 
   .logo-text {

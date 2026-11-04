@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="static/brand/logo-wordmark.png" alt="MidManStudio" width="260" />
+</p>
+
 # MidManStudio
 
 The studio site for **MidManStudio** — Unity packages, the Rust-powered tech underneath them, and the projects built on top. Live at [midmanstudio.pages.dev](https://midmanstudio.pages.dev).
@@ -36,6 +40,13 @@ Everything is declared in `src/lib/data/media.ts`; files go under `static/media/
 - An entry with **no `src`** renders as a "coming soon" slot — fill it in later by adding the `src`.
 
 Current folders: `game/` (Projectile System test scene), `mdix-studio/` (the Unity editor tool), `mdix-lsp/` (DixScript in VS Code).
+
+## Brand assets
+
+- `static/brand/logo-wordmark.png` — full wordmark (README header)
+- `static/brand/logo-mark.png` — cube icon used in the nav and footer
+- `static/brand/og-image.png` — 1200×630 social card (referenced by `og:image` in `src/app.html`)
+- `static/favicon.png` and `static/apple-touch-icon.png` — tab and home-screen icons, both made from the cube icon
 
 ## Deploy
 

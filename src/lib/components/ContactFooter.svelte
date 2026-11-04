@@ -43,7 +43,7 @@
 <footer class="footer">
   <div class="container footer-inner">
     <div class="footer-brand">
-      <span class="logo-mark">M</span>
+      <img class="logo-mark" src="/brand/logo-mark.png" alt="" width="28" height="28" />
       <span class="footer-brand-text">MidMan<em>Studio</em></span>
     </div>
 
@@ -102,16 +102,10 @@
   }
 
   .logo-mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     width: 28px;
     height: 28px;
-    border-radius: 7px;
-    background: var(--grad-brand);
-    color: var(--void-950);
-    font-weight: 900;
-    font-size: var(--fs-sm);
+    object-fit: contain;
+    filter: drop-shadow(0 0 5px rgba(57, 255, 20, 0.35));
   }
 
   .footer-brand-text {
