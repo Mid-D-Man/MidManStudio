@@ -1,0 +1,61 @@
+# FILE: .github/workflows/tidy-death-roll.yml
+# One-time repair. The Death Roll archive was applied to the repo root, which dumped main.c, assets/, raylib/, tests/ and six
+# folders into src/, and replaced README.md. This moves every game file into game/death-roll/ and puts the studio README back.
+# Safe to run more than once (it does nothing when there is nothing left to move) and in any order relative to applying
+# death-roll-in-repo.tar.gz. Run it from the Actions tab (Run workflow), then delete this file.
+name: Tidy Death Roll files (run once)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tidy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with full history (the README is restored from it)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Move the game into game/death-roll
+        run: |
+          set -e
+          GAME=game/death-roll
+          # exactly what the bad upload added; nothing else in the repo is touched
+          STRAY="main.c assets raylib tests src/input src/platform src/render src/sim src/storage src/ui"
+
+          moved=0
+          for f in $(git ls-files -- $STRAY); do
+            if [ -e "$GAME/$f" ]; then
+              git rm -q -f -- "$f"          # an updated copy is already in place: drop the stray one
+            else
+              mkdir -p "$GAME/$(dirname "$f")"
+              git mv -- "$f" "$GAME/$f"
+            fi
+            moved=$((moved + 1))
+          done
+          echo "Handled $moved stray files."
+
+          # the root README was overwritten with the game's: file it with the game, bring back the studio's
+          if [ -f README.md ] && head -n 1 README.md | grep -q '^# Death Roll'; then
+            mkdir -p "$GAME"
+            git mv -f README.md "$GAME/README.md"
+            git checkout 6909b5f -- README.md
+            echo "README.md restored."
+          fi
+
+      - name: Commit
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit: the repo is already tidy."
+            exit 0
+          fi
+          git commit -m "chore: move the Death Roll game into game/death-roll and restore the studio README"
+          git push
