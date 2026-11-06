@@ -1,10 +1,20 @@
 # FILE: .github/workflows/deploy.yml
+# Builds Death Roll (C + raylib) to WebAssembly into static/play/death-roll/, then builds the SvelteKit site
+# (which copies static/ into the output) and deploys it to Cloudflare Pages.
+#
+# raylib 6.2 is required: the game calls ImageDrawImage, which raylib 5.5 does not have.
+# emsdk 5.0.3 is the version raylib 6.2's own WebAssembly CI uses.
 name: Deploy to Cloudflare Pages
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+env:
+  RAYLIB_VERSION: '6.2'
+  EMSDK_VERSION: '5.0.3'
+  RAYLIB_DIR: ${{ github.workspace }}/.raylib
 
 jobs:
   deploy:
@@ -15,6 +25,41 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup emscripten
+        uses: emscripten-core/setup-emsdk@v15
+        with:
+          version: ${{ env.EMSDK_VERSION }}
+          actions-cache-folder: emsdk-cache
+
+      # Only src/ of raylib is needed (headers + the web library). Cached per raylib + emsdk version.
+      - name: Restore raylib web build
+        id: raylib-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.RAYLIB_DIR }}
+          key: raylib-web-${{ env.RAYLIB_VERSION }}-emsdk-${{ env.EMSDK_VERSION }}
+
+      - name: Build raylib for web
+        if: steps.raylib-cache.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          rm -rf "$RAYLIB_DIR"
+          git clone --depth 1 --branch "$RAYLIB_VERSION" --filter=blob:none --sparse \
+            https://github.com/raysan5/raylib.git "$RAYLIB_DIR"
+          git -C "$RAYLIB_DIR" sparse-checkout set src
+          emcc -v
+          make -C "$RAYLIB_DIR/src" PLATFORM=PLATFORM_WEB -B -j"$(nproc)"
+          # raylib 6.x names the web library libraylib.web.a; build-web.sh looks for libraylib.a
+          cp "$RAYLIB_DIR/src/libraylib.web.a" "$RAYLIB_DIR/src/libraylib.a"
+
+      - name: Build Death Roll (WebAssembly)
+        run: |
+          set -e
+          RAYLIB="$RAYLIB_DIR" sh game/death-roll/build-web.sh
+          for f in index.html index.js index.wasm index.data; do
+            test -s "static/play/death-roll/$f" || { echo "Missing static/play/death-roll/$f"; exit 1; }
+          done
 
       - name: Setup Node
         uses: actions/setup-node@v4
