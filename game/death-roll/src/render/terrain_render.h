@@ -1,6 +1,7 @@
 // ============================================================================
 // The slope as meshes. The ground is cut into 32 m chunks; a fixed set of eleven (one behind the ball, nine ahead) is kept,
-// each a flat-shaded triangle mesh with the lighting baked into vertex colours. As the ball moves on, the chunk that fell
+// each a flat-shaded triangle mesh with the lighting baked into vertex colours (the lawn colour comes from grass.c) and
+// texture coordinates for the tiling grass texture. As the ball moves on, the chunk that fell
 // behind is rebuilt for the one coming up and re-uploaded in place (UpdateMeshBuffer). A chunk's vertices are relative to
 // its own start, and the whole thing is drawn relative to the ball, so no coordinate the GPU sees is ever large.
 // ============================================================================
@@ -11,7 +12,7 @@
 
 #define TR_SLOTS 11
 
-typedef struct { int index; Mesh mesh; } TrSlot;
+typedef struct { int index; Mesh mesh; int uv_ok; } TrSlot;   // uv_ok: the (chunk independent) texcoords are on the GPU
 
 typedef struct {
     TrSlot slots[TR_SLOTS];

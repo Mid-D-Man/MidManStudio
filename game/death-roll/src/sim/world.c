@@ -22,10 +22,16 @@ static void gen_cell(WorldCell *c, int k, bool empty)
     const double d = world_difficulty(s0);
     const double safe = world_safe_halfwidth(d);
 
-    const int attempts = 2 + (int)(dr_unit(dr_hash3(ku, 0x77u, seed)) * (2.0 + 4.0 * d));   // 2..5 early, up to 2..7 late
+    // 2..3 attempts early, up to 2..7 late, scaled by how much wider the spawn range is than the old +-(track + 3.5) so the
+    // density per metre of width stays the same (the fraction is rounded up at random, deterministically per cell)
+    const double wide = DR_SPAWN_HALF / (DR_TRACK_HALF + 3.5);
+    const int    base = 2 + (int)(dr_unit(dr_hash3(ku, 0x77u, seed)) * (2.0 + 4.0 * d));
+    const double want = base * wide;
+    int attempts = (int)want;
+    if (dr_unit(dr_hash3(ku, 0x78u, seed)) < want - attempts) attempts++;
     for (int i = 0; i < attempts && c->count < DR_MAX_OBS; i++) {
         const uint32_t iu = (uint32_t)i;
-        const double ox   = (dr_unit(dr_hash3(ku, 0x100u + iu, seed)) * 2.0 - 1.0) * (DR_TRACK_HALF + 3.5);
+        const double ox   = (dr_unit(dr_hash3(ku, 0x100u + iu, seed)) * 2.0 - 1.0) * DR_SPAWN_HALF;
         const double os   = s0 + dr_unit(dr_hash3(ku, 0x200u + iu, seed)) * DR_CELL_LEN;
         const bool   rock = dr_unit(dr_hash3(ku, 0x300u + iu, seed)) < 0.35;
         const double u    = dr_unit(dr_hash3(ku, 0x400u + iu, seed));

@@ -19,5 +19,5 @@ cc -std=c99 -Wall -Wextra -Wundef -O2 -DDR_TESTS -Isrc/sim \
 echo
 echo "=== render geometry ==="
 cc -std=c99 -Wall -Wextra -Wno-unused-parameter -O2 -DDR_RENDER_TESTS -isystem "$RL" -Isrc \
-   src/render/terrain_render.c src/render/meshes.c src/sim/terrain.c tests/test_render.c -lm -o "$OUT/dr_test_render"
+   src/render/terrain_render.c src/render/meshes.c src/render/grass.c src/sim/terrain.c tests/test_render.c -lm -o "$OUT/dr_test_render"
 "$OUT/dr_test_render"

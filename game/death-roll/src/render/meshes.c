@@ -1,5 +1,6 @@
 #include "meshes.h"
 #include "../sim/sim_common.h"
+#include "grass.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -134,5 +135,27 @@ Texture2D meshes_build_ball_texture(void)
     Texture2D tex = LoadTextureFromImage(img);
     UnloadImage(img);
     SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
+    return tex;
+}
+
+Texture2D meshes_build_grass_texture(void)
+{
+    // GRASS_TILE_PX is a power of two on purpose: WebGL 1 only repeats and mipmaps those. Repeat wrap is what makes the ground
+    // seamless, mipmaps keep the far ground from shimmering at speed.
+    Image img = GenImageColor(GRASS_TILE_PX, GRASS_TILE_PX, WHITE);            // R8G8B8A8
+    if (img.data != NULL) {
+        unsigned char *px = (unsigned char *)img.data;
+        for (int y = 0; y < GRASS_TILE_PX; y++)
+            for (int x = 0; x < GRASS_TILE_PX; x++) {
+                unsigned char *p = &px[(y * GRASS_TILE_PX + x) * 4];
+                grass_texel(x, y, p);
+                p[3] = 255;
+            }
+    }
+    Texture2D tex = LoadTextureFromImage(img);
+    UnloadImage(img);
+    SetTextureWrap(tex, TEXTURE_WRAP_REPEAT);
+    GenTextureMipmaps(&tex);
+    SetTextureFilter(tex, TEXTURE_FILTER_TRILINEAR);                          // after the mipmaps exist
     return tex;
 }

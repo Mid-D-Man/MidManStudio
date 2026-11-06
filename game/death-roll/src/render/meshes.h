@@ -7,5 +7,6 @@
 Mesh      meshes_build_tree(void);      // unit height 1, base at y = 0, canopy base radius 0.30; vertex colours (faceted)
 Mesh      meshes_build_rock(void);      // unit radius, centred on the origin; vertex colours (faceted)
 Texture2D meshes_build_ball_texture(void);   // pearl body with the studio logo around it (assets/logo.png)
+Texture2D meshes_build_grass_texture(void);  // the tiling detail texture of the ground (grass.c): repeat wrap, mipmapped
 
 #endif

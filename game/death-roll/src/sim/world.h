@@ -4,6 +4,8 @@
 //   1. A winding "lane" (terrain_lane_center) is always kept clear, wide enough for the ball plus a margin.
 //   2. Nothing is placed in a ramp's keep-clear corridor (approach, lip, landing: see terrain_in_ramp_corridor), and
 //      nothing in the first 70 m.
+// And one rule the other way: obstacles are spread over the whole width the ball can reach (out to the invisible wall at
+// DR_X_LIMIT), so the banked walls are not a safe place to ride. tests/test_sim.c has a bot that holds the wall.
 // ============================================================================
 #ifndef DR_WORLD_H
 #define DR_WORLD_H
@@ -11,6 +13,7 @@
 #include "sim_common.h"
 
 #define DR_MAX_OBS      10
+#define DR_SPAWN_HALF   (DR_X_LIMIT + 0.5)   // obstacles are placed across |x| <= this: everywhere the ball can go
 #define DR_CELL_CACHE   40      // cells kept (40 x 24 m = 960 m): far more than the 300 m that is ever drawn
 
 typedef enum { OBS_TREE = 0, OBS_ROCK = 1 } ObsType;

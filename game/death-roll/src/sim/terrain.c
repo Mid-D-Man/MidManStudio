@@ -81,12 +81,15 @@ double terrain_ramp_mask(double x, double s)
 // A ramp keeps a band clear of obstacles: 14 m of approach, the ramp, and 75 m beyond the lip (a fast jump carries about
 // 70 m). The band is as wide as the ramp plus 4.5 m each side (plus the obstacle's own radius via `margin`). Only the band
 // is kept clear, not the whole track: the rest of the slope keeps its obstacles.
+// The ends are padded by the obstacle's reach (its radius plus the ball's): an obstacle just outside the band could otherwise
+// still touch a ball that has only just entered it.
 bool terrain_in_ramp_corridor(double x, double s, double margin)
 {
     const int c = (int)floor(s / DR_RAMP_CELL);
+    const double pad = margin + DR_BALL_R;
     for (int k = c - 1; k <= c; k++) {                        // a landing stretch can spill into the next cell
         const Ramp r = terrain_ramp(k);
-        if (r.exists && s >= r.s0 - 14.0 && s <= r.s0 + r.len + 75.0 && fabs(x - r.x) < r.halfw + 4.5 + margin) return true;
+        if (r.exists && s >= r.s0 - 14.0 - pad && s <= r.s0 + r.len + 75.0 + pad && fabs(x - r.x) < r.halfw + 4.5 + margin) return true;
     }
     return false;
 }

@@ -7,6 +7,7 @@
 #include "raymath.h"
 #include "../src/render/terrain_render.h"
 #include "../src/render/meshes.h"
+#include "../src/render/grass.h"
 #include "../src/sim/terrain.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +15,7 @@
 #include <limits.h>
 
 // ---- stubs for the raylib calls those two files make ----------------------------------------------------------------
-static int g_uploads, g_updates, g_draws;
+static int g_uploads, g_updates, g_draws, g_uv_updates;
 static Matrix g_last_draw;
 static int g_bad_update;
 
@@ -26,7 +27,8 @@ void UpdateMeshBuffer(Mesh mesh, int index, const void *data, int dataSize, int 
     if (!data || offset != 0) g_bad_update++;
     if (index == 0 && dataSize != mesh.vertexCount * 3 * (int)sizeof(float)) g_bad_update++;
     if (index == 3 && dataSize != mesh.vertexCount * 4) g_bad_update++;
-    if (index != 0 && index != 3) g_bad_update++;
+    if (index == 1) { g_uv_updates++; if (dataSize != mesh.vertexCount * 2 * (int)sizeof(float)) g_bad_update++; }
+    if (index != 0 && index != 1 && index != 3) g_bad_update++;
 }
 void DrawMesh(Mesh mesh, Material material, Matrix transform) { (void)mesh; (void)material; g_draws++; g_last_draw = transform; }
 Image GenImageColor(int w, int h, Color c) { (void)c; Image i = { 0 }; i.width = w; i.height = h; return i; }
@@ -39,6 +41,8 @@ void ImageDrawImage(Image *dst, Image src, int x, int y, Color t) { (void)dst; (
 void UnloadImage(Image i) { (void)i; }
 Texture2D LoadTextureFromImage(Image i) { Texture2D t = { 0 }; t.width = i.width; t.height = i.height; return t; }
 void SetTextureFilter(Texture2D t, int f) { (void)t; (void)f; }
+void SetTextureWrap(Texture2D t, int w) { (void)t; (void)w; }
+void GenTextureMipmaps(Texture2D *t) { (void)t; }
 
 static int g_fail = 0, g_checks = 0;
 #define CHECK(cond, ...) do { g_checks++; if (!(cond)) { g_fail++; printf("  FAIL %s:%d  ", __FILE__, __LINE__); printf(__VA_ARGS__); printf("\n"); } } while (0)
@@ -54,6 +58,9 @@ static void check_chunk_mesh(const Mesh *m, int chunk, int *tris_total, int *tri
         CHECK(z <= 1e-3f && z >= -32.0f - 1e-3f, "chunk-local z out of range: %f", z);
         CHECK(fabsf(y) < 60.0f, "chunk-local y out of range: %f", y);      // heights are relative to the chunk's own base
         CHECK(m->colors[v * 4 + 3] == 255, "colour alpha not opaque");
+        const float u = m->texcoords[v * 2], tv = m->texcoords[v * 2 + 1];
+        CHECK(fabsf(u - x / (float)GRASS_TILE_M) < 1e-4f && fabsf(tv + z / (float)GRASS_TILE_M) < 1e-4f,
+              "texcoord (%f, %f) does not follow the world position (%f, %f)", u, tv, x, z);
     }
     for (int t = 0; t < m->vertexCount / 3; t++) {
         const float *a = &m->vertices[(t * 3) * 3], *b = &m->vertices[(t * 3 + 1) * 3], *c = &m->vertices[(t * 3 + 2) * 3];
@@ -96,6 +103,7 @@ static void test_terrain_render(void)
     }
     CHECK(worst_missing == 0, "%d needed chunks were missing at some frame", worst_missing);
     CHECK(g_bad_update == 0, "%d malformed UpdateMeshBuffer calls", g_bad_update);
+    CHECK(g_uv_updates == TR_SLOTS, "texcoords were uploaded %d times, wanted once per slot (%d)", g_uv_updates, TR_SLOTS);
     printf("  streamed 20 km: %d chunk rebuilds, %d buffer updates\n", t.rebuilt_total, g_updates);
 
     // seed change: invalidate then rebuild must produce a different ground
@@ -113,6 +121,67 @@ static void test_terrain_render(void)
     CHECK(g_draws >= 8 && g_draws <= TR_SLOTS, "drew %d chunks", g_draws);
     CHECK(fabsf(g_last_draw.m12) < 1e-6f, "chunk translated sideways");
     CHECK(fabsf(g_last_draw.m13) < 500.0f && fabsf(g_last_draw.m14) < 500.0f, "chunk offset is large (%f, %f): precision would suffer", g_last_draw.m13, g_last_draw.m14);
+}
+
+// ---- the grass: a tile that repeats without a seam, steady brightness, chunk edges that meet on tile edges --------------
+static double texel_luma(int x, int y) { unsigned char p[3]; grass_texel(x, y, p); return 0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]; }
+
+static void test_grass(void)
+{
+    printf("grass\n");
+    const int N = GRASS_TILE_PX;
+    CHECK((N & (N - 1)) == 0, "tile size %d is not a power of two (WebGL 1 cannot repeat or mipmap it)", N);
+    CHECK(fmod(32.0, GRASS_TILE_M) == 0.0, "the 32 m chunk length is not a whole number of tiles: chunk starts would not be tile edges");
+
+    // it is periodic: any integer coordinates fold back into the tile
+    int periodic = 1;
+    for (int y = 0; y < N; y += 7) for (int x = 0; x < N; x += 5) {
+        unsigned char a[3], b[3];
+        grass_texel(x, y, a); grass_texel(x + 3 * N, y - 2 * N, b);
+        if (memcmp(a, b, 3) != 0) periodic = 0;
+    }
+    CHECK(periodic, "grass_texel is not periodic in the tile size");
+
+    // no seam: neighbouring pixels across the wrap differ about as much as neighbouring pixels inside the tile
+    double seam_h = 0, in_h = 0, seam_v = 0, in_v = 0, sum = 0, sum2 = 0, lo = 1e9, hi = 0;
+    for (int i = 0; i < N; i++) {
+        seam_h += fabs(texel_luma(N - 1, i) - texel_luma(N, i));
+        seam_v += fabs(texel_luma(i, N - 1) - texel_luma(i, N));
+        for (int j = 0; j < N - 1; j++) {
+            in_h += fabs(texel_luma(j, i) - texel_luma(j + 1, i));
+            in_v += fabs(texel_luma(i, j) - texel_luma(i, j + 1));
+        }
+    }
+    for (int y = 0; y < N; y++) for (int x = 0; x < N; x++) {
+        const double l = texel_luma(x, y); sum += l; sum2 += l * l; if (l < lo) lo = l; if (l > hi) hi = l;
+    }
+    seam_h /= N; seam_v /= N; in_h /= N * (N - 1); in_v /= N * (N - 1);
+    CHECK(seam_h <= in_h * 1.35 + 0.5, "visible seam left/right: %.2f at the wrap vs %.2f inside", seam_h, in_h);
+    CHECK(seam_v <= in_v * 1.35 + 0.5, "visible seam top/bottom: %.2f at the wrap vs %.2f inside", seam_v, in_v);
+
+    const double mean = sum / (N * N) / 255.0, sd = sqrt(sum2 / (N * N) - (sum / (N * N)) * (sum / (N * N)));
+    CHECK(mean * GRASS_TEX_GAIN > 0.97 && mean * GRASS_TEX_GAIN < 1.03, "texture brightness %.3f x gain %.2f is not about 1 (the lawn would get darker or brighter)", mean, (double)GRASS_TEX_GAIN);
+    CHECK(sd > 4.0, "texture is almost flat (stddev %.1f)", sd);
+    CHECK(lo > 100.0, "texture has near-black pixels (%.0f)", lo);
+    printf("  tile %dx%d: mean %.3f (x gain = %.3f), stddev %.1f, range %.0f..%.0f; wrap diff %.2f/%.2f vs inside %.2f/%.2f\n",
+           N, N, mean, mean * GRASS_TEX_GAIN, sd, lo, hi, seam_h, seam_v, in_h, in_v);
+
+    // the lawn colour: steady, bounded, different per seed, and smooth (no jump between neighbouring spots)
+    double min_l = 1e9, max_l = 0, worst_step = 0;
+    int differs = 0;
+    for (double s = 0.0; s < 400.0; s += 0.5) for (double x = -27.0; x <= 27.0; x += 3.0) {
+        float a[3], b[3];
+        terrain_set_seed(5); grass_patch(x, s, a); grass_patch(x + 0.05, s, b);
+        for (int k = 0; k < 3; k++) { CHECK(isfinite(a[k]) && a[k] >= 0.0f && a[k] <= 255.0f, "lawn colour out of range"); worst_step = fmax(worst_step, fabs(a[k] - b[k])); }
+        const double l = 0.299 * a[0] + 0.587 * a[1] + 0.114 * a[2];
+        if (l < min_l) min_l = l;
+        if (l > max_l) max_l = l;
+        float c[3]; terrain_set_seed(6); grass_patch(x, s, c); if (fabsf(a[1] - c[1]) > 0.5f) differs++;
+    }
+    CHECK(worst_step < 2.5, "lawn colour jumps by %.2f over 5 cm", worst_step);
+    CHECK(max_l - min_l > 25.0, "the lawn has no patches (luma %.0f..%.0f)", min_l, max_l);
+    CHECK(differs > 100, "a different seed gave the same lawn");
+    printf("  lawn luma %.0f..%.0f across 400 m, largest step %.2f per 5 cm, %d spots differ between two seeds\n", min_l, max_l, worst_step, differs);
 }
 
 static void check_soup(const char *name, Mesh m, float max_extent, float min_height, float max_height)
@@ -140,11 +209,14 @@ static void test_meshes(void)
     check_soup("rock", meshes_build_rock(), 1.2f, 0.7f, 1.3f);
     Texture2D t = meshes_build_ball_texture();
     CHECK(t.width == 512 && t.height == 256, "ball texture is %dx%d, wanted 512x256 (2:1 keeps the logo square on the sphere)", t.width, t.height);
+    Texture2D gt = meshes_build_grass_texture();
+    CHECK(gt.width == GRASS_TILE_PX && gt.height == GRASS_TILE_PX, "grass texture is %dx%d", gt.width, gt.height);
 }
 
 int main(void)
 {
     test_terrain_render();
+    test_grass();
     test_meshes();
     printf("\n%d checks, %d failed\n", g_checks, g_fail);
     return g_fail ? 1 : 0;

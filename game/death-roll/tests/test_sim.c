@@ -85,7 +85,7 @@ static void test_fairness(void)
                 CHECK(!terrain_in_ramp_corridor(o->x, o->s, o->r), "obstacle inside a ramp keep-clear corridor (s=%f)", o->s);
                 const double gap = fabs(o->x - terrain_lane_center(o->s)) - o->r;
                 if (gap < world_safe_halfwidth(d)) minimum_gap_ok = 0;
-                CHECK(fabs(o->x) <= DR_TRACK_HALF + 3.5 + 1e-9, "obstacle outside the track");
+                CHECK(fabs(o->x) <= DR_SPAWN_HALF + 1e-9, "obstacle outside the spawn range");
             }
         }
         free(g);
@@ -138,6 +138,32 @@ static void test_lane_bot(void)
     CHECK(worst_speed_min >= DR_MIN_SPEED - 1e-9, "speed fell below the minimum");
     CHECK(worst_speed_max <= DR_MAX_SPEED + 1e-9, "speed above the maximum");
     CHECK(n_far > 0 && sum_far / n_far > 26.0 && sum_far / n_far < 62.0, "mean speed out of the intended band");
+    free(g);
+}
+
+// ---- 4b. the walls are not a safe place ---------------------------------------------------------------------------
+// Regression: obstacles used to stop at |x| = 18.5 while the ball can reach |x| = 21, so holding the stick to one side and
+// riding the wall survived forever. Now the whole reachable width has obstacles, so a bot that does exactly that must die.
+static void test_wall_hugger(void)
+{
+    printf("wall hugger (the sides are not safe)\n");
+    Game *g = (Game *)malloc(sizeof *g);
+    int runs = 0, survivors = 0; double sum = 0.0, worst = 0.0;
+    for (int side = -1; side <= 1; side += 2) {
+        for (uint32_t seed = 1; seed <= 25; seed++) {
+            game_reset(g, seed);
+            long steps = 0;
+            while (!g->dead && g->ball.s < 4000.0 && steps < 120L * 600) { game_step(g, DR_STEP, (double)side); steps++; }
+            runs++;
+            if (!g->dead) survivors++;
+            sum += g->ball.s;
+            if (g->ball.s > worst) worst = g->ball.s;
+            CHECK(fabs(g->ball.x) > DR_X_LIMIT - 0.01, "the bot was meant to be against the wall (x=%.2f)", g->ball.x);
+        }
+    }
+    printf("  %d runs, %d survived 4 km; mean death at %.0f m, furthest %.0f m\n", runs, survivors, sum / runs, worst);
+    CHECK(survivors == 0, "%d of %d wall-hugging runs survived 4 km", survivors, runs);
+    CHECK(sum / runs < 800.0, "wall hugging lasts too long on average (%.0f m)", sum / runs);
     free(g);
 }
 
@@ -293,7 +319,9 @@ static void test_steering(void)
     CHECK(g->ball.x < x1 - 4.0, "steering back left is too weak");
     for (int i = 0; i < 120 * 6; i++) game_step(g, DR_STEP, 1.0);
     CHECK(g->ball.x <= DR_X_LIMIT + 1e-9, "the ball left the track");
-    CHECK(!g->dead, "no obstacle should exist in the first 70 m");
+    // nine seconds is well past the clear start, and the wall is no longer a safe place (see test_wall_hugger): only a death
+    // before the clear start (nothing can touch the ball before about s = 68) would be a bug here
+    CHECK(!g->dead || g->ball.s > 68.0, "died inside the clear start (s=%.1f)", g->ball.s);
     free(g);
 }
 
@@ -303,6 +331,7 @@ int main(void)
     test_terrain();
     test_fairness();
     test_lane_bot();
+    test_wall_hugger();
     test_ramps();
     test_collisions();
     test_steering();

@@ -1,6 +1,7 @@
 <!-- FILE: src/lib/components/MediaGallery.svelte -->
 <script lang="ts">
   import { reveal } from '$lib/actions/reveal';
+  import GifMedia from '$lib/components/GifMedia.svelte';
   import { mediaItems, mediaFilters, type MediaFilterId } from '$lib/data/media';
 
   // Content lives in $lib/data/media.ts — add images, GIFs and clips there.
@@ -19,7 +20,7 @@
     </h2>
     <p class="section-intro reveal" use:reveal>
       Gameplay captures, editor tooling in action, and the DixScript toolchain at work.
-      Tap any image to open it full size.
+      Tap an image to open it full size, or an animation to pause and play it.
     </p>
 
     <div class="gallery-filters reveal" use:reveal role="group" aria-label="Filter the showcase">
@@ -51,6 +52,15 @@
                 controls
                 preload="metadata"
               ></video>
+            {:else if item.src && item.type === 'gif' && item.poster}
+              <GifMedia
+                src={item.src}
+                poster={item.poster}
+                alt={item.alt ?? item.title}
+                title={item.title}
+                width={item.width}
+                height={item.height}
+              />
             {:else if item.src}
               <a href={item.src} target="_blank" rel="noopener noreferrer" class="gallery-link">
                 <img

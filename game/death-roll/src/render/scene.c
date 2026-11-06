@@ -12,9 +12,9 @@
 
 typedef struct {
     Shaders   sh;
-    Material  mat_world, mat_ball;
+    Material  mat_world, mat_ball, mat_ground;
     Mesh      ball, tree, rock;
-    Texture2D ball_tex;
+    Texture2D ball_tex, grass_tex;
     TerrainRender terrain;
     Quaternion spin;
     float shake, cam_dy, look_dy, back, ahead, t;
@@ -36,14 +36,17 @@ void scene_init(void)
     S.stats.hud_shader_ok = S.sh.hud_ok;
 
     S.ball_tex = meshes_build_ball_texture();
+    S.grass_tex = meshes_build_grass_texture();
     S.ball = GenMeshSphere((float)DR_BALL_R, 24, 32);
     S.tree = meshes_build_tree();
     S.rock = meshes_build_rock();
 
     S.mat_world = LoadMaterialDefault();
     S.mat_ball  = LoadMaterialDefault();
-    if (S.sh.world_ok) { S.mat_world.shader = S.sh.world; S.mat_ball.shader = S.sh.world; }
+    S.mat_ground = LoadMaterialDefault();
+    if (S.sh.world_ok) { S.mat_world.shader = S.sh.world; S.mat_ball.shader = S.sh.world; S.mat_ground.shader = S.sh.world; }
     SetMaterialTexture(&S.mat_ball, MATERIAL_MAP_DIFFUSE, S.ball_tex);
+    SetMaterialTexture(&S.mat_ground, MATERIAL_MAP_DIFFUSE, S.grass_tex);
 
     terrain_render_init(&S.terrain);
     S.spin = QuaternionIdentity();
@@ -182,7 +185,7 @@ void scene_draw3d(Game *g, int sw, int sh)
     BeginMode3D(cam);
     rlDisableBackfaceCulling();                                  // the ground and props are only ever seen from outside; this makes winding a non-issue
 
-    terrain_render_draw(&S.terrain, S.mat_world, b->y, b->s);
+    terrain_render_draw(&S.terrain, S.mat_ground, b->y, b->s);
     draw_obstacles(g);
     draw_shadow(b);
 
