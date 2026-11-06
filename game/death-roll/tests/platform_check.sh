@@ -5,7 +5,10 @@
 #   sh tests/platform_check.sh
 set -e
 cd "$(dirname "$0")/.."
-RL="${RAYLIB_SRC:-raylib/src}"
+RL="${RAYLIB_SRC:-}"
+if [ -z "$RL" ]; then
+    if [ -f raylib/src/raylib.h ]; then RL=raylib/src; else RL="$HOME/raylib-test/raylib/src"; fi
+fi
 OUT="${TMPDIR:-/tmp}/dr_platform_check"
 rm -rf "$OUT"; mkdir -p "$OUT/desktop" "$OUT/web"
 SRCS="$(find . -name '*.c' -not -path './raylib/*' -not -path './.git/*' | sed 's|^\./||' | sort)"

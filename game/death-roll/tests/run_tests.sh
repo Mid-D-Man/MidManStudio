@@ -2,10 +2,13 @@
 # Headless tests. Need only a C compiler: no raylib library, no GL, no emscripten.   sh tests/run_tests.sh
 #   1. the simulation (terrain, ball physics, obstacle generation, rules), with bots playing thousands of metres
 #   2. the render-side geometry (terrain chunk meshes, generated meshes), with raylib's GPU calls stubbed
-# RAYLIB_SRC points at raylib's headers; the default is the copy mray puts in every project.
+# RAYLIB_SRC points at raylib's headers; default: raylib/src if it has them, else ~/raylib-test/raylib/src.
 set -e
 cd "$(dirname "$0")/.."
-RL="${RAYLIB_SRC:-raylib/src}"
+RL="${RAYLIB_SRC:-}"
+if [ -z "$RL" ]; then
+    if [ -f raylib/src/raylib.h ]; then RL=raylib/src; else RL="$HOME/raylib-test/raylib/src"; fi
+fi
 OUT="${TMPDIR:-/tmp}"
 
 echo "=== simulation ==="
