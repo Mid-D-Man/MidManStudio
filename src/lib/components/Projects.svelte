@@ -6,9 +6,9 @@
   const statusLabel = { featured: 'Featured', 'in-progress': 'In Progress', completed: 'Completed' } as const;
 </script>
 
-<section id="projects" class="section section--alt">
+<section id="projects" class="section">
   <div class="container">
-    <span class="section-label">04 — Beyond Games</span>
+    <span class="section-label">05 — Beyond Games</span>
     <h2 class="section-title reveal" use:reveal>
       Web work <em>and research</em>
     </h2>

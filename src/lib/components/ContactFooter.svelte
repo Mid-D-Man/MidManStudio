@@ -2,7 +2,11 @@
 <script lang="ts">
   const year = new Date().getFullYear();
 
+  const email = 'midmanstudio@proton.me';
+
   const links = [
+    { label: 'Telegram', href: 'https://t.me/midmanstudio' },
+    { label: 'Discord', href: 'https://discord.gg/vtxVx4XNU' },
     { label: 'GitHub — Mid-D-Man', href: 'https://github.com/Mid-D-Man' },
     { label: 'GitHub — MidManStudio', href: 'https://github.com/MidManStudio' }
   ];
@@ -11,6 +15,7 @@
     { label: 'Packages', href: '#packages' },
     { label: 'Core Tech', href: '#tech' },
     { label: 'Showcase', href: '#showcase' },
+    { label: 'Play', href: '#play' },
     { label: 'Beyond Games', href: '#projects' },
     { label: 'About', href: '#about' }
   ];
@@ -18,19 +23,21 @@
 
 <section id="contact" class="section contact-section">
   <div class="container contact-inner">
-    <span class="section-label">06 — Contact</span>
+    <span class="section-label">07 — Contact</span>
     <h2 class="section-title">
       Let's build <em>something</em>
     </h2>
     <p class="section-intro">
       Open to collaborations, contract work, and questions about any of the
-      packages or tools above. Reach out through GitHub for now.
+      packages or tools above. Reach out by email, on Telegram, or in the Discord server.
+    </p>
+
+    <p class="contact-email">
+      <a href="mailto:{email}">{email}</a>
     </p>
 
     <div class="contact-cta-row">
-      <a href="https://github.com/Mid-D-Man" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-        Message on GitHub
-      </a>
+      <a href="mailto:{email}" class="btn btn-primary">Email Us</a>
       {#each links as l (l.href)}
         <a href={l.href} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
           {l.label}
@@ -70,6 +77,21 @@
 
   .contact-section .section-intro {
     margin-inline: auto;
+  }
+
+  .contact-email {
+    margin-bottom: var(--sp-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-base);
+    overflow-wrap: anywhere;
+  }
+
+  .contact-email a {
+    color: var(--cyan);
+  }
+
+  .contact-email a:hover {
+    text-decoration: underline;
   }
 
   .contact-cta-row {

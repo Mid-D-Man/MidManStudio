@@ -28,6 +28,7 @@ Most updates are data edits — no component changes needed.
 | `src/lib/data/ecosystem.ts` | "Core Tech" cards (DixScript, mid-math, MSX, projectile_core) |
 | `src/lib/data/projects.ts` | Shipped projects |
 | `src/lib/data/media.ts` | Showcase gallery (images, GIFs, clips) |
+| `src/lib/components/ContactFooter.svelte` | Contact section: email, Telegram, Discord and GitHub links (`email` and `links` at the top of the file) |
 
 SIMD is deliberately attributed to **mid-math only** (the `mid-math` card in `ecosystem.ts`) — keep it out of the other cards.
 
@@ -42,6 +43,8 @@ Everything is declared in `src/lib/data/media.ts`; files go under `static/media/
 Current folders: `game/` (Projectile System test scene), `mdix-studio/` (the Unity editor tool), `mdix-lsp/` (DixScript in VS Code).
 
 ## Games
+
+The **Play** section of the page (`src/lib/components/PlayGame.svelte`, nav link `#play`) shows Death Roll as click-to-play: the game loads in an iframe only after the visitor presses Play, with Full screen, Open full page and Stop buttons. If `/play/death-roll/` is not published yet (a 404), the section shows a "Web build coming soon" poster instead, and it switches to the playable version on its own once the build is committed, with no site change needed.
 
 `game/death-roll/` is Death Roll, a one-thumb downhill game written in C with raylib and built to WebAssembly (its own README has the details). It lives in this repo but outside `src/`, so it never touches the SvelteKit build. To publish a new build: `sh game/death-roll/build-web.sh` (needs emscripten and raylib's web build), then commit `static/play/death-roll/`. The site serves it at `/play/death-roll/`.
 

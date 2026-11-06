@@ -56,6 +56,8 @@ sh game/death-roll/build-web.sh
 
 That runs the same `emcc` command mray runs (needs emscripten and raylib's web build; raylib is looked up in `~/raylib-test/raylib`, override with `RAYLIB=...`) and writes `index.html`, `index.js`, `index.wasm` and `index.data` to `static/play/death-roll/`. Commit that folder; the site serves it at `/play/death-roll/`. To try it first: `cd static/play/death-roll && python3 -m http.server 8080`, and add `?debug` to the URL for the overlay.
 
+The studio page embeds it in its **Play** section (`src/lib/components/PlayGame.svelte`): a click-to-play iframe of `/play/death-roll/`, same origin as the page so the saved best distance is not partitioned away. Until that folder is committed the section shows a "Web build coming soon" poster, and it becomes playable by itself afterwards.
+
 ## Tests
 
 ```
@@ -75,4 +77,4 @@ The simulation tests play thousands of metres with bots: a lane-following bot ne
 3. Smash mechanic: small bushes break and cost a little speed; only boulders and big trees kill.
 4. Synthesised sound (reuse the synth from Tower of Babylon), unlocked on the first touch.
 5. Speed effects, daily seed with a shareable score.
-6. The Play page on the site: click-to-play, served from the same origin as the page so the saved score is not partitioned away.
+6. ~~The Play page on the site~~ Done: the Play section of the studio page (click-to-play, same origin so the saved score is not partitioned away).

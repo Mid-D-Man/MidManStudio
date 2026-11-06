@@ -9,6 +9,7 @@
     { href: '#packages', label: 'Packages' },
     { href: '#tech', label: 'Core Tech' },
     { href: '#showcase', label: 'Showcase' },
+    { href: '#play', label: 'Play' },
     { href: '#projects', label: 'Beyond Games' },
     { href: '#about', label: 'About' },
     { href: '#contact', label: 'Contact' }

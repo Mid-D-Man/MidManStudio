@@ -18,10 +18,10 @@
   ];
 </script>
 
-<section id="about" class="section">
+<section id="about" class="section section--alt">
   <div class="container about-grid">
     <div class="about-text reveal" use:reveal>
-      <span class="section-label">05 — About</span>
+      <span class="section-label">06 — About</span>
       <h2 class="section-title">
         One studio, <em>built end to end</em>
       </h2>

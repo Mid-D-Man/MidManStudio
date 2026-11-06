@@ -4,6 +4,7 @@
   import UnityPackages from '$lib/components/UnityPackages.svelte';
   import CoreTech from '$lib/components/CoreTech.svelte';
   import MediaGallery from '$lib/components/MediaGallery.svelte';
+  import PlayGame from '$lib/components/PlayGame.svelte';
   import Projects from '$lib/components/Projects.svelte';
   import About from '$lib/components/About.svelte';
   import ContactFooter from '$lib/components/ContactFooter.svelte';
@@ -21,6 +22,7 @@
 <UnityPackages />
 <CoreTech />
 <MediaGallery />
+<PlayGame />
 <Projects />
 <About />
 <ContactFooter />
