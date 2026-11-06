@@ -1,91 +1,65 @@
-<a href="https://git.io/typing-svg">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=18&duration=3000&pause=1000&color=4169E1&vCenter=true&width=520&lines=Game+Developer+%7C+Unity+%26+C%23;Rust+%26+WebAssembly+Enthusiast;Founder+of+MidManStudio;Bridging+Vision+%26+Reality" alt="Typing SVG" />
-</a>
-
----
-
-I'm a game developer and software engineer with **8+ years** of experience, based in **Nigeria**, and founder of **MidManStudio**. I build games, tools, and web experiences — with a focus on doing things the interesting way...
-
-<br/>
-
-<img src="https://img.shields.io/badge/Primary_Focus-Game_Development-0d1117?style=flat-square&logo=unity&logoColor=4169e1&labelColor=0d1117&color=4169e1" />
-<br/>
-<img src="https://img.shields.io/badge/Published-DixScript--Rust-0d1117?style=flat-square&logo=rust&logoColor=2ea043&labelColor=0d1117&color=2ea043" />
-<br/>
-<img src="https://img.shields.io/badge/Portfolio-Built_in_Rust_%2B_Leptos_%2F_WASM-0d1117?style=flat-square&logo=webassembly&logoColor=58a6ff&labelColor=0d1117&color=58a6ff" />
-<br/>
-<img src="https://img.shields.io/badge/Location-Nigeria-0d1117?style=flat-square&logo=googlemaps&logoColor=888&labelColor=0d1117&color=333" />
-
----
-
-## Stack
-
-<p>
-  <img src="https://skillicons.dev/icons?i=unity,cs,rust,js,html,css&perline=6&theme=dark" />
-</p>
-<p>
-  <img src="https://skillicons.dev/icons?i=dotnet,blazor,react,firebase,supabase,blender&perline=6&theme=dark" />
-</p>
-<p>
-  <img src="https://skillicons.dev/icons?i=svelte,tauri,cloudflare,c,cpp&perline=6&theme=dark" />
-</p>
-<p>
-  <img src="https://img.shields.io/badge/raylib-000000?style=flat-square" />
-  <img src="https://img.shields.io/badge/Penpot-000000?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMSAxNEg5VjhoMnY4em00IDBoLTJWOGgydjh6Ii8+PC9zdmc+" />
+<p align="center">
+  <img src="static/brand/logo-wordmark.png" alt="MidManStudio" width="260" />
 </p>
 
----
+# MidManStudio
 
-## Featured Projects
+The studio site for **MidManStudio** — Unity packages, the Rust-powered tech underneath them, and the projects built on top. Live at [midmanstudio.pages.dev](https://midmanstudio.pages.dev).
 
-| Project | Description | Stack |
-|---|---|---|
-| [AirCode](https://mid-d-man.github.io/AirCode/) | QR-based attendance platform for higher institutions | Blazor, C#, Firebase |
-| [DixScript-Rust](https://github.com/Mid-D-Man/DixScript-Rust) | Config + code + crypto in one `.mdix` format — core published on crates.io, npm, PyPI & NuGet | Rust |
-| [mid-qr](https://github.com/MidManStudio/mid_qr_code_lib) | QR code generation & scanning — Rust/WASM core, shared by an npm package and a Blazor component library | Rust, WASM, Blazor |
-| [mdix-scaffold](https://github.com/Mid-D-Man/mdix-scaffold) | Declarative, idempotent project-structure generator, powered by DixScript | Rust, DixScript |
-| [MSX](https://github.com/Mid-D-Man/msx) | Vector graphics format authored in DixScript, compressed with MBFA | Rust |
-| [MidManStudio Unity](https://github.com/MidManStudio/MidManStudio_Unity) | Unity package monorepo — utilities, audio, netcode, patterns & projectile system packages | C#, Unity |
-| [Portfolio Site](https://mid-d-man.github.io) | Compiled to WebAssembly, deployed via GitHub Actions | Rust, Leptos |
+SvelteKit 2 + Svelte 5 (TypeScript), deployed to Cloudflare Pages.
 
----
+## Develop
 
-## Stats
+```bash
+npm install
+npm run dev       # local dev server
+npm run check     # svelte-check + type check
+npm run build     # production build -> .svelte-kit/cloudflare
+npm run preview   # serve the production build locally
+```
 
-<p>
-  <img src="https://github-readme-stats.vercel.app/api?username=mid-d-man&show_icons=true&count_private=true&include_all_commits=true&theme=tokyonight&hide_border=true&bg_color=0d1117&title_color=4169e1&icon_color=4169e1&cache_seconds=1800" height="150" />
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=mid-d-man&layout=compact&langs_count=8&theme=tokyonight&hide_border=true&bg_color=0d1117&title_color=4169e1&cache_seconds=1800" height="150" />
-</p>
+## Where the content lives
 
-<p>
-  <img src="https://streak-stats.demolab.com?user=mid-d-man&theme=tokyonight&hide_border=true&background=0d1117&ring=4169e1&fire=dc143c&currStreakLabel=4169e1" height="150" />
-</p>
+Most updates are data edits — no component changes needed.
 
----
+| File | What it drives |
+| --- | --- |
+| `src/lib/data/packages.ts` | Unity package cards (MDIX Studio, utilities, audio, netcode, patterns, projectile system). Only cards with a `media` field get a screenshot / GIF slot. MDIX Studio's source lives in the DixScript-Rust repo; the rest are in MidManStudio_Unity |
+| `src/lib/data/ecosystem.ts` | "Core Tech" cards (DixScript, mid-math, MSX, projectile_core) |
+| `src/lib/data/projects.ts` | Shipped projects |
+| `src/lib/data/media.ts` | Showcase gallery (images, GIFs, clips) |
 
-## Get in Touch
+SIMD is deliberately attributed to **mid-math only** (the `mid-math` card in `ecosystem.ts`) — keep it out of the other cards.
 
-<p>
-  <a href="mailto:midmanstudio@proton.me">
-    <img src="https://img.shields.io/badge/midmanstudio%40proton.me-0d1117?style=for-the-badge&logo=protonmail&logoColor=6D4AFF&labelColor=0d1117" />
-  </a>
-  <a href="https://t.me/midmanstudio">
-    <img src="https://img.shields.io/badge/t.me%2Fmidmanstudio-0d1117?style=for-the-badge&logo=telegram&logoColor=26A5E4&labelColor=0d1117" />
-  </a>
-  <a href="https://discord.gg/vtxVx4XNU">
-    <img src="https://img.shields.io/badge/Discord-0d1117?style=for-the-badge&logo=discord&logoColor=5865F2&labelColor=0d1117" />
-  </a>
-  <a href="https://mid-d-man.github.io">
-    <img src="https://img.shields.io/badge/mid--d--man.github.io-0d1117?style=for-the-badge&logo=githubpages&logoColor=4169e1&labelColor=0d1117" />
-  </a>
-  <a href="https://linkedin.com/company/MidManStudio">
-    <img src="https://img.shields.io/badge/MidManStudio-0d1117?style=for-the-badge&logo=linkedin&logoColor=0A66C2&labelColor=0d1117" />
-  </a>
-  <a href="https://github.com/mid-d-man">
-    <img src="https://img.shields.io/badge/mid--d--man-0d1117?style=for-the-badge&logo=github&logoColor=white&labelColor=0d1117" />
-  </a>
-</p>
+## Adding showcase media
 
-<br/>
+Everything is declared in `src/lib/data/media.ts`; files go under `static/media/`.
 
-> *"Every great game starts with a simple idea and the courage to make it real."*
+- **Image or GIF** — drop the file in `static/media/images/<folder>/`, then add an entry with `src: '/media/images/<folder>/<file>'`. A `.gif` is handled exactly like a `.png`. Set `width`/`height` (px) and a descriptive `alt`.
+- **Video** — drop the file in `static/media/videos/`, then add an entry with `type: 'video'`, `src: '/media/videos/<file>.mp4'` and an optional `poster`.
+- An entry with **no `src`** renders as a "coming soon" slot — fill it in later by adding the `src`.
+
+Current folders: `game/` (Projectile System test scene), `mdix-studio/` (the Unity editor tool), `mdix-lsp/` (DixScript in VS Code).
+
+## Games
+
+`game/death-roll/` is Death Roll, a one-thumb downhill game written in C with raylib and built to WebAssembly (its own README has the details). It lives in this repo but outside `src/`, so it never touches the SvelteKit build. To publish a new build: `sh game/death-roll/build-web.sh` (needs emscripten and raylib's web build), then commit `static/play/death-roll/`. The site serves it at `/play/death-roll/`.
+
+## Brand assets
+
+- `static/brand/logo-wordmark.png` — full wordmark (README header)
+- `static/brand/logo-mark.png` — cube icon used in the nav and footer
+- `static/brand/og-image.png` — 1200×630 social card (referenced by `og:image` in `src/app.html`)
+- `static/favicon.png` and `static/apple-touch-icon.png` — tab and home-screen icons, both made from the cube icon
+
+## Deploy
+
+Pushing to `main` runs `.github/workflows/deploy.yml`, which builds the site and publishes it to the Cloudflare Pages project `midmanstudio`. The workflow needs the repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+
+## Scaffold / replacements
+
+This repo uses [mdix-scaffold](https://github.com/Mid-D-Man/mdix-scaffold). Batches of changed files are applied by committing a `.tar.gz` next to `.mdix/replacements/replacements.mdix` and running the **Apply replacements** workflow (`.github/workflows/run-replacements.yml`).
+
+## License
+
+Proprietary — all rights reserved. See [LICENSE](LICENSE).
