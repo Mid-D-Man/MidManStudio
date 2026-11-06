@@ -16,4 +16,5 @@
 
   overrides::
     target("README.md", "README.md")
+    target("game/death-roll/README.md", "game/death-roll/README.md")
 )
