@@ -1,71 +1,65 @@
-# Death Roll
+<p align="center">
+  <img src="static/brand/logo-wordmark.png" alt="MidManStudio" width="260" />
+</p>
 
-A one-thumb downhill game for the MidManStudio portfolio. You are a big ball with the studio logo on it, rolling down an endless procedural slope: hills to ride, ramps to launch off, trees and rocks to dodge. **One hit ends the run** (shields, when they arrive, soak a hit instead). C99 + raylib, built to WebAssembly with mray; the whole game is meant to stay well under 1 MB with no art files except one 256 px logo.
+# MidManStudio
 
-Working title. Status: milestone 1-3 (the core loop). See *Roadmap*.
+The studio site for **MidManStudio** — Unity packages, the Rust-powered tech underneath them, and the projects built on top. Live at [midmanstudio.pages.dev](https://midmanstudio.pages.dev).
 
-## Controls (and how they are gated)
+SvelteKit 2 + Svelte 5 (TypeScript), deployed to Cloudflare Pages.
 
-| Device | Steer | Start / retry |
-| --- | --- | --- |
-| Touch | drag left / right anywhere (floating stick) | tap |
-| Mouse | hold the left button and drag, same as touch | click |
-| Keyboard | A / D or the arrow keys | space or enter |
+## Develop
 
-* Which device is "current" is whichever was used last; it only picks the hints and prompts shown.
-* Touch is read only where the platform has a screen (`DR_INPUT_TOUCH`). Browsers also send emulated mouse events after a touch, so the mouse is ignored for 0.8 s after any touch.
-* The drag stick's neutral point is where the finger lands and follows the finger if it goes past full steer, so returning is quick. Full steer is 15 % of the **short** screen side: the same distance under the thumb in portrait and landscape.
-* Orientation is read every frame from the screen size. Portrait: score centred at the top, camera further back and higher. Landscape: score top-left, best top-right. The field of view keeps about 74 degrees across, within limits.
-* The canvas follows the browser viewport (rotation, address bar, an iframe being resized).
-* A crash cannot be skipped by accident: retry needs a fresh press, 0.6 s after the crash.
-* `F3`, or `?debug` in the page URL, shows an overlay: fps, device, orientation, shader status, speed, seed.
-
-## How it works
-
-The slope is a function, not data: `terrain_height(x, s)` = base gradient + rolling hills (value noise) + ramps + banked walls at the sides. Nothing is stored, so it is endless and free. The ball is a point that follows that ground, and leaves it when the ground falls away faster than free fall: ramps launch it, crests make it hop. No physics engine, no collision meshes. Obstacles are generated per 24 m cell from a hash of (seed, cell), so they can be thrown away behind you and regenerated identically.
-
-Fairness rules (tested): a winding lane is always kept clear and wide enough for the ball; nothing in the first 70 m; each ramp keeps a corridor clear of obstacles (approach, lip, 75 m of landing).
-
-Rendering draws everything **relative to the ball**, so no coordinate the GPU sees is large; with highp shaders of our own (raylib's default vertex shader is mediump, which breaks on phone GPUs) and distance fog. The ground is eleven 32 m flat-shaded chunks, rebuilt in place as you move on.
-
-```
-main.c                    window, main loop, run state (menu / run / crashed)
-src/platform/platform.h   the ONE place that knows the platform; capability macros, always defined, used as #if DR_x
-src/sim/                  plain C, no raylib: terrain, ball physics, obstacle generation, rules (headless-testable)
-src/input/                device-gated steering
-src/render/               shaders, chunk meshes, scene (camera, props, shadow, ball)
-src/ui/hud.c              menus and HUD, laid out from the screen size and orientation
-src/storage/              best distance: browser localStorage on the web, a file elsewhere (failures are swallowed)
-raylib/src/shell.html     the page around the game (mray uses it automatically)
-assets/logo.png           the only asset; the ball's texture is composed from it at start-up
-tests/                    headless tests
+```bash
+npm install
+npm run dev       # local dev server
+npm run check     # svelte-check + type check
+npm run build     # production build -> .svelte-kit/cloudflare
+npm run preview   # serve the production build locally
 ```
 
-## Tuning
+## Where the content lives
 
-All the feel lives in a few numbers. Gameplay in `src/sim/sim_common.h` (slope, gravity, steering, drag, speeds), generation in `src/sim/terrain.c` (ramp chance and size, hill height, lane) and `src/sim/world.c` (obstacle count, difficulty ramp, lane width), camera in `view_params()` in `src/render/scene.c`, drag sensitivity in `src/input/input.c`. Terminal speed on the base slope is about `sqrt(DR_SLOPE * DR_SLOPE_ACCEL / DR_DRAG_Q)` (34 m/s), rising towards 50 m/s over the first 6 km.
+Most updates are data edits — no component changes needed.
 
-## Build and run
+| File | What it drives |
+| --- | --- |
+| `src/lib/data/packages.ts` | Unity package cards (MDIX Studio, utilities, audio, netcode, patterns, projectile system). Only cards with a `media` field get a screenshot / GIF slot. MDIX Studio's source lives in the DixScript-Rust repo; the rest are in MidManStudio_Unity |
+| `src/lib/data/ecosystem.ts` | "Core Tech" cards (DixScript, mid-math, MSX, projectile_core) |
+| `src/lib/data/projects.ts` | Shipped projects |
+| `src/lib/data/media.ts` | Showcase gallery (images, GIFs, clips) |
 
-With mray: create a project (option 1), apply this archive (option 8), build (2), serve (3). Open the page on the phone. Add `?debug` to the URL for the overlay.
+SIMD is deliberately attributed to **mid-math only** (the `mid-math` card in `ecosystem.ts`) — keep it out of the other cards.
 
-## Tests
+## Adding showcase media
 
-```
-sh tests/run_tests.sh        # simulation + render geometry; needs only a C compiler
-sh tests/platform_check.sh   # every file as desktop and as web (stub emscripten header), with -Wundef
-```
-Point `RAYLIB_SRC` at raylib's headers if the project has none yet. The test files are empty translation units unless built with their `-D` flag, so mray's "compile every .c" build never sees a second `main()`.
+Everything is declared in `src/lib/data/media.ts`; files go under `static/media/`.
 
-The simulation tests play thousands of metres with bots: a lane-following bot never dies over 12 seeds x 20 km; a ramp bot launches and lands safely; shields absorb a hit; a crashed ball comes to rest. The render tests run the real mesh-building code with raylib's GPU calls stubbed: every triangle faces up, chunks stream correctly for 20 km at 2 rebuilds a frame, nothing handed to the GPU is large.
+- **Image or GIF** — drop the file in `static/media/images/<folder>/`, then add an entry with `src: '/media/images/<folder>/<file>'`. A `.gif` is handled exactly like a `.png`. Set `width`/`height` (px) and a descriptive `alt`.
+- **Video** — drop the file in `static/media/videos/`, then add an entry with `type: 'video'`, `src: '/media/videos/<file>.mp4'` and an optional `poster`.
+- An entry with **no `src`** renders as a "coming soon" slot — fill it in later by adding the `src`.
 
-**Not yet verified:** anything that needs a GL context or a touchscreen (the look, the fog, the feel of the drag stick, frame rate on a phone, rotating the device). That is what the first run on the phone is for; the debug overlay says whether both shaders compiled.
+Current folders: `game/` (Projectile System test scene), `mdix-studio/` (the Unity editor tool), `mdix-lsp/` (DixScript in VS Code).
 
-## Roadmap
+## Games
 
-1. **Pickups**: coins (saved total), boost, shields (max 3; a hit slows you instead of ending the run). The shield rules are already in the sim and tested, there is just nothing to pick up yet.
-2. Unlocks: spend saved points on ball skins and trails.
-3. Smash mechanic: small bushes break and cost a little speed; only boulders and big trees kill.
-4. Synthesised sound (reuse the synth from Tower of Babylon), unlocked on the first touch.
-5. Speed effects, daily seed with a shareable score.
-6. The portfolio embed: click-to-play, same origin as the page so the saved score is not partitioned away.
+`game/death-roll/` is Death Roll, a one-thumb downhill game written in C with raylib and built to WebAssembly (its own README has the details). It lives in this repo but outside `src/`, so it never touches the SvelteKit build. To publish a new build: `sh game/death-roll/build-web.sh` (needs emscripten and raylib's web build), then commit `static/play/death-roll/`. The site serves it at `/play/death-roll/`.
+
+## Brand assets
+
+- `static/brand/logo-wordmark.png` — full wordmark (README header)
+- `static/brand/logo-mark.png` — cube icon used in the nav and footer
+- `static/brand/og-image.png` — 1200×630 social card (referenced by `og:image` in `src/app.html`)
+- `static/favicon.png` and `static/apple-touch-icon.png` — tab and home-screen icons, both made from the cube icon
+
+## Deploy
+
+Pushing to `main` runs `.github/workflows/deploy.yml`, which builds the site and publishes it to the Cloudflare Pages project `midmanstudio`. The workflow needs the repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+
+## Scaffold / replacements
+
+This repo uses [mdix-scaffold](https://github.com/Mid-D-Man/mdix-scaffold). Batches of changed files are applied by committing a `.tar.gz` next to `.mdix/replacements/replacements.mdix` and running the **Apply replacements** workflow (`.github/workflows/run-replacements.yml`).
+
+## License
+
+Proprietary — all rights reserved. See [LICENSE](LICENSE).
