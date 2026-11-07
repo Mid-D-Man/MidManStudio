@@ -33,6 +33,10 @@
 #define DR_LAT_DRAG     4.2     // sideways damping (1/s): top sideways speed is STEER_ACCEL / LAT_DRAG
 #define DR_LAT_SLOPE    0.7     // how hard a sideways slope pushes the ball downhill sideways
 #define DR_AIR_CONTROL  0.35    // steering strength while airborne
+#define DR_PACE_DIST    12000.0 // the pace keeps rising until here. world_difficulty() stops at 6000 m, and without this the ball stopped
+                                //   getting faster at 6 km (about 45 m/s) and the run went flat after about 2m40s
+#define DR_PACE_RELIEF  0.24    // by DR_PACE_DIST this much more of the drag has been taken away (0.24: about 50 m/s on average by 12 km;
+                                //   0.45 would be about 56 m/s). Raise it for a steeper climb, 0 to switch it off.
 #define DR_START_SPEED  14.0
 #define DR_MIN_SPEED    10.0
 #define DR_MAX_SPEED    70.0

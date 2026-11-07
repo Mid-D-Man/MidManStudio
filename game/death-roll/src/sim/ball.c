@@ -17,7 +17,9 @@ void ball_step(Ball *b, double dt, double steer, double difficulty, double brake
     double gx, gs;
     terrain_gradient(b->x, b->s, &gx, &gs);
 
-    const double dragq = DR_DRAG_Q * (1.0 - 0.5 * difficulty);
+    // drag falls with the difficulty (0 to 6000 m), and then keeps falling more slowly (to 12000 m), so the speed never stops climbing
+    const double pace  = dr_clamp(b->s / DR_PACE_DIST, 0.0, 1.0);
+    const double dragq = DR_DRAG_Q * (1.0 - 0.5 * difficulty) * (1.0 - DR_PACE_RELIEF * pace);
     double as, ax;
     if (b->grounded) {
         as = brake > 0.0 ? -brake * b->vs                    // crashed: only braking, so it comes to rest even downhill

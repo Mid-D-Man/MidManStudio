@@ -377,6 +377,43 @@ static void test_looks(void)
     free(a); free(b);
 }
 
+// ---- 9. the pace: the ball keeps getting faster after the difficulty ramp has ended (6 km) ---------------------------------
+static double window_speed(uint32_t seed, double s_lo, double s_hi, bool *died)
+{
+    Game *g = (Game *)malloc(sizeof *g);
+    game_reset(g, seed);
+    double sum = 0.0; long n = 0;
+    for (long i = 0; i < 120L * 600 && !g->dead && g->ball.s < s_hi; i++) {
+        const double lane = terrain_lane_center(g->ball.s + 8.0);
+        game_step(g, DR_STEP, (lane - g->ball.x) * 0.5 - g->ball.vx * 0.12);        // follows the clear lane
+        if (g->ball.s >= s_lo) { sum += g->ball.vs; n++; }
+    }
+    if (g->dead) *died = true;
+    free(g);
+    return n ? sum / (double)n : 0.0;
+}
+
+static void test_pace(void)
+{
+    printf("pace\n");
+    double early = 0.0, at6 = 0.0, at12 = 0.0, at16 = 0.0;
+    bool died = false;
+    const int seeds = 6;
+    for (uint32_t seed = 1; seed <= (uint32_t)seeds; seed++) {
+        early += window_speed(seed, 400.0, 600.0, &died);
+        at6   += window_speed(seed, 5800.0, 6200.0, &died);
+        at12  += window_speed(seed, 11800.0, 12200.0, &died);
+        at16  += window_speed(seed, 15800.0, 16200.0, &died);
+    }
+    early /= seeds; at6 /= seeds; at12 /= seeds; at16 /= seeds;
+    printf("  average speed: %.1f m/s at 500 m, %.1f at 6 km, %.1f at 12 km, %.1f at 16 km\n", early, at6, at12, at16);
+    CHECK(!died, "the lane-following bot died while the pace was being measured");
+    CHECK(at6 > early + 8.0, "the speed does not climb to 6 km (%.1f -> %.1f)", early, at6);
+    CHECK(at12 > at6 + 1.0, "the speed stopped climbing at 6 km (%.1f at 6 km, %.1f at 12 km)", at6, at12);
+    CHECK(at12 < DR_MAX_SPEED - 8.0 && at16 < DR_MAX_SPEED - 8.0, "the pace is close to the speed limit (%.1f, %.1f of %.0f)", at12, at16, (double)DR_MAX_SPEED);
+    CHECK(at16 > at6 + 1.0, "the speed fell back after 12 km (%.1f at 16 km vs %.1f at 6 km)", at16, at6);
+}
+
 int main(void)
 {
     test_determinism();
@@ -388,6 +425,7 @@ int main(void)
     test_collisions();
     test_steering();
     test_looks();
+    test_pace();
     printf("\n%d checks, %d failed\n", g_checks, g_fail);
     return g_fail ? 1 : 0;
 }

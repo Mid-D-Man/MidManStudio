@@ -69,6 +69,10 @@ To add a look: raise `DR_TREE_VARIANTS` / `DR_ROCK_VARIANTS` in `src/sim/sim_com
 * The squash is measured along the ground's normal, and the ball is moved by the same amount, so a squashed ball still touches the slope at the same point (tested numerically) and never sinks in or hovers. The volume is constant. The shadow widens as the ball flattens.
 * Tuning: the constants at the top of `squash.c` (`SQ_OMEGA` speed of the wobble, `SQ_ZETA` how bouncy, the clamps) and the amounts in `squash_update`.
 
+## Speed
+
+The ball starts at 14 m/s, reaches about 33 m/s in the first ten seconds, and keeps getting faster for the whole run: less drag as the difficulty rises (to 6 km) and then a slower further relief (to 12 km, `DR_PACE_DIST` / `DR_PACE_RELIEF` in `sim_common.h`). Measured with a bot that follows the clear lane, averaged over 6 seeds: about 34 m/s at 500 m, 48 at 6 km, 50 at 12 km, and it stays there (the hills and ramps make it wobble by a few m/s). Before this the climb ended at 6 km at about 45 m/s. The hard cap is `DR_MAX_SPEED` (70). `tests/test_sim.c` (`test_pace`) fails if the speed stops climbing or the ball ever gets close to the cap.
+
 ## Tuning
 
 All the feel lives in a few numbers. Gameplay in `src/sim/sim_common.h` (slope, gravity, steering, drag, speeds), generation in `src/sim/terrain.c` (ramp chance and size, hill height, lane) and `src/sim/world.c` (obstacle count, difficulty ramp, lane width), camera in `view_params()` in `src/render/scene.c`, drag sensitivity in `src/input/input.c`. Terminal speed on the base slope is about `sqrt(DR_SLOPE * DR_SLOPE_ACCEL / DR_DRAG_Q)` (34 m/s), rising towards 50 m/s over the first 6 km.
