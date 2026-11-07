@@ -3,11 +3,15 @@
 // without a GL context. Built by tests/run_tests.sh with -DDR_RENDER_TESTS; an empty translation unit otherwise.
 #ifdef DR_RENDER_TESTS
 
+#define RAYMATH_STATIC_INLINE      // no libraylib is linked here: use raymath as private inline functions
 #include "raylib.h"
 #include "raymath.h"
 #include "../src/render/terrain_render.h"
 #include "../src/render/meshes.h"
 #include "../src/render/grass.h"
+#include "../src/render/squash.h"
+#include "../src/render/ball_xform.h"
+#include "../src/sim/sim_common.h"
 #include "../src/sim/terrain.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -201,16 +205,207 @@ static void check_soup(const char *name, Mesh m, float max_extent, float min_hei
     printf("  %s: %d vertices, y %.2f..%.2f\n", name, m.vertexCount, bot, top);
 }
 
+static uint64_t mesh_fingerprint(Mesh m)
+{
+    uint64_t h = 1469598103934665603ULL;
+    for (int v = 0; v < m.vertexCount * 3; v++) { int32_t q = (int32_t)lroundf(m.vertices[v] * 1000.0f); h ^= (uint32_t)q; h *= 1099511628211ULL; }
+    for (int v = 0; v < m.vertexCount * 4; v++) { h ^= m.colors[v]; h *= 1099511628211ULL; }
+    return h;
+}
+
 static void test_meshes(void)
 {
     printf("generated meshes\n");
     terrain_set_seed(1);
-    check_soup("tree", meshes_build_tree(), 0.31f, 0.999f, 1.001f);
-    check_soup("rock", meshes_build_rock(), 1.2f, 0.7f, 1.3f);
+    uint64_t prints[16];
+    int np = 0;
+
+    // Trees: unit height, footprint within the original 0.30 canopy radius, tip exactly at the top (the collision height).
+    for (int v = 0; v < DR_TREE_VARIANTS; v++) {
+        char name[32]; snprintf(name, sizeof name, "tree %d", v);
+        Mesh m = meshes_build_tree_variant(v);
+        check_soup(name, m, 0.31f, 0.999f, 1.001f);
+        CHECK(m.vertexCount < 900, "%s: %d vertices fills the 300-triangle buffer, so triangles were dropped", name, m.vertexCount);
+        float bot = 1e9f; for (int i = 0; i < m.vertexCount; i++) if (m.vertices[i * 3 + 1] < bot) bot = m.vertices[i * 3 + 1];
+        CHECK(bot > -0.001f && bot < 0.02f, "%s: base at %f, wanted 0 (it must stand on the ground)", name, bot);
+        prints[np++] = mesh_fingerprint(m);
+    }
+    for (int a = 0; a < np; a++) for (int b = a + 1; b < np; b++) CHECK(prints[a] != prints[b], "tree variants %d and %d are the same mesh", a, b);
+
+    // Rocks: unit radius around the origin, top near +1 (the collision height), nothing wider than the footprint the collision uses.
+    np = 0;
+    for (int v = 0; v < DR_ROCK_VARIANTS; v++) {
+        char name[32]; snprintf(name, sizeof name, "rock %d", v);
+        Mesh m = meshes_build_rock_variant(v);
+        check_soup(name, m, 1.2f, 0.85f, 1.05f);
+        CHECK(m.vertexCount < 900, "%s: %d vertices fills the 300-triangle buffer, so triangles were dropped", name, m.vertexCount);
+        float bot = 1e9f; for (int i = 0; i < m.vertexCount; i++) if (m.vertices[i * 3 + 1] < bot) bot = m.vertices[i * 3 + 1];
+        CHECK(bot > -1.05f, "%s: bottom at %f", name, bot);
+        prints[np++] = mesh_fingerprint(m);
+    }
+    for (int a = 0; a < np; a++) for (int b = a + 1; b < np; b++) CHECK(prints[a] != prints[b], "rock variants %d and %d are the same mesh", a, b);
+
+    // variant 0 is still the original tree and rock, and an out-of-range variant falls back to it
+    CHECK(mesh_fingerprint(meshes_build_tree()) == mesh_fingerprint(meshes_build_tree_variant(0)), "meshes_build_tree() is not variant 0");
+    CHECK(mesh_fingerprint(meshes_build_rock()) == mesh_fingerprint(meshes_build_rock_variant(0)), "meshes_build_rock() is not variant 0");
+    CHECK(mesh_fingerprint(meshes_build_tree_variant(99)) == mesh_fingerprint(meshes_build_tree_variant(0)), "tree variant 99 did not fall back to 0");
+    CHECK(mesh_fingerprint(meshes_build_rock_variant(-3)) == mesh_fingerprint(meshes_build_rock_variant(0)), "rock variant -3 did not fall back to 0");
+
     Texture2D t = meshes_build_ball_texture();
     CHECK(t.width == 512 && t.height == 256, "ball texture is %dx%d, wanted 512x256 (2:1 keeps the logo square on the sphere)", t.width, t.height);
     Texture2D gt = meshes_build_grass_texture();
     CHECK(gt.width == GRASS_TILE_PX && gt.height == GRASS_TILE_PX, "grass texture is %dx%d", gt.width, gt.height);
+}
+
+// ---- the cartoon ball ----------------------------------------------------------------------------------------------------
+static SquashInput sq_in(bool grounded, float speed)
+{
+    SquashInput in;
+    in.grounded = grounded; in.launched = in.landed = in.hit = in.died = false;
+    in.speed = speed; in.impact = 0.0f;
+    in.vel[0] = 0.0f; in.vel[1] = grounded ? -0.3f * speed : -0.5f * speed; in.vel[2] = -speed;
+    return in;
+}
+
+static void sq_run(Squash *q, float seconds, float dt, SquashInput in, float *min_e, float *max_e)
+{
+    in.launched = in.landed = in.hit = in.died = false;
+    for (float t = 0.0f; t < seconds - 1e-6f; t += dt) {
+        squash_update(q, dt, &in);
+        if (min_e && q->e < *min_e) *min_e = q->e;
+        if (max_e && q->e > *max_e) *max_e = q->e;
+    }
+}
+
+static void test_squash(void)
+{
+    printf("squash and stretch\n");
+    SquashInput in = sq_in(true, 30.0f);
+
+    // rolling along the ground: no impact squash at all, only a hint of speed stretch
+    Squash q; squash_reset(&q);
+    sq_run(&q, 2.0f, 1.0f / 60.0f, in, NULL, NULL);
+    CHECK(fabsf(q.e) < 1e-4f, "rolling on flat ground squashed the ball (e = %f)", q.e);
+    CHECK(q.m > 0.0f && q.m <= 0.05f + 1e-4f, "ground speed stretch %f outside (0, 0.05]", q.m);
+
+    // a hard landing: snaps flat, bounces back past round (jelly), settles
+    SquashInput land = in; land.landed = true; land.impact = 25.0f;
+    squash_update(&q, 1.0f / 120.0f, &land);
+    CHECK(q.e < -0.25f && q.e >= -0.42f - 1e-4f, "landing at 25 m/s squashed to %f, wanted -0.42..-0.25", q.e);
+    float mn = q.e, mx = q.e;
+    sq_run(&q, 0.8f, 1.0f / 60.0f, in, &mn, &mx);
+    CHECK(mx > 0.02f && mx < 0.2f, "no jelly overshoot after the squash (max e = %f)", mx);
+    sq_run(&q, 3.0f, 1.0f / 60.0f, in, NULL, NULL);
+    CHECK(fabsf(q.e) < 1e-3f && fabsf(q.ev) < 1e-2f, "the squash did not settle (e = %f)", q.e);
+
+    // a harder landing squashes deeper; a tap hardly squashes at all
+    Squash soft, hard; squash_reset(&soft); squash_reset(&hard);
+    SquashInput l1 = in, l2 = in; l1.landed = l2.landed = true; l1.impact = 8.0f; l2.impact = 35.0f;
+    squash_update(&soft, 1.0f / 120.0f, &l1); squash_update(&hard, 1.0f / 120.0f, &l2);
+    CHECK(hard.e < soft.e, "a harder landing was not deeper (%f vs %f)", hard.e, soft.e);
+    Squash tap; squash_reset(&tap);
+    SquashInput l3 = in; l3.landed = true; l3.impact = 0.5f;
+    squash_update(&tap, 1.0f / 120.0f, &l3);
+    CHECK(fabsf(tap.e) < 0.03f, "a 0.5 m/s touch squashed the ball (%f)", tap.e);
+
+    // leaving the ground pops the stretch, then the anchor lets go
+    Squash a; squash_reset(&a);
+    SquashInput air = sq_in(false, 40.0f), up = air; up.launched = true;
+    squash_update(&a, 1.0f / 120.0f, &up);
+    float peak = 0.0f; sq_run(&a, 0.4f, 1.0f / 120.0f, air, NULL, &peak);
+    CHECK(peak > 0.05f, "take-off gave no stretch pop (peak %f)", peak);
+    CHECK(a.ground < 0.01f, "the ground anchor is still %f in mid-air", a.ground);
+    CHECK(a.m > 0.15f && a.m <= 0.28f + 1e-3f, "air speed stretch %f for 40 m/s outside (0.15, 0.28]", a.m);
+    SquashInput back = in; back.landed = true; back.impact = 20.0f;
+    squash_update(&a, 1.0f / 120.0f, &back);
+    CHECK(a.ground == 1.0f, "landing did not re-anchor (%f)", a.ground);
+
+    // shield hit and death give their own squash
+    Squash h; squash_reset(&h);
+    SquashInput hit = in; hit.hit = true; squash_update(&h, 1.0f / 120.0f, &hit);
+    CHECK(h.e < -0.25f, "a shield hit did not squash (%f)", h.e);
+    SquashInput dead = in; dead.died = true; squash_update(&h, 1.0f / 120.0f, &dead);
+    CHECK(h.e < -0.38f, "death did not squash (%f)", h.e);
+
+    // same landing at 240 Hz and at 30 Hz: about the same curve (the spring is stepped in small sub-steps)
+    Squash f1, f2; squash_reset(&f1); squash_reset(&f2);
+    SquashInput lf = in; lf.landed = true; lf.impact = 25.0f;
+    squash_update(&f1, 1.0f / 240.0f, &lf); squash_update(&f2, 1.0f / 30.0f, &lf);
+    sq_run(&f1, 0.30f - 1.0f / 240.0f, 1.0f / 240.0f, in, NULL, NULL);
+    sq_run(&f2, 0.30f - 1.0f / 30.0f, 1.0f / 30.0f, in, NULL, NULL);
+    CHECK(fabsf(f1.e - f2.e) < 0.05f, "frame-rate dependent: e = %f at 240 Hz vs %f at 30 Hz", f1.e, f2.e);
+
+    // nonsense in, sane out: a ten-second frame, an absurd impact, NaN speed, a zero velocity
+    Squash z; squash_reset(&z);
+    SquashInput bad = in; bad.landed = bad.launched = bad.hit = bad.died = true; bad.impact = 1e9f; bad.speed = NAN;
+    bad.vel[0] = bad.vel[1] = bad.vel[2] = 0.0f;
+    for (int i = 0; i < 50; i++) { squash_update(&z, i % 2 ? 10.0f : 0.0f, &bad); }
+    CHECK(isfinite(z.e) && isfinite(z.ev) && isfinite(z.m) && isfinite(z.ground), "non-finite squash state");
+    CHECK(z.e >= -0.42f - 1e-4f && z.e <= 0.30f + 1e-4f && z.m >= 0.0f && z.m <= 0.32f + 1e-4f, "squash state out of range (e %f, m %f)", z.e, z.m);
+    CHECK(fabsf(z.dir[0] * z.dir[0] + z.dir[1] * z.dir[1] + z.dir[2] * z.dir[2] - 1.0f) < 1e-3f, "travel direction is not unit length");
+    for (int i = 0; i < 200; i++) {
+        SquashInput r = in; r.landed = (i % 7) == 0; r.launched = (i % 11) == 0; r.impact = (float)(i % 40);
+        r.vel[0] = (float)((i * 37) % 23 - 11); r.vel[1] = (float)((i * 13) % 31 - 15); r.vel[2] = -(float)((i * 17) % 60);
+        squash_update(&z, 1.0f / 60.0f, &r);
+        CHECK(isfinite(z.e) && fabsf(z.dir[0] * z.dir[0] + z.dir[1] * z.dir[1] + z.dir[2] * z.dir[2] - 1.0f) < 1e-3f, "state broke on random input");
+    }
+
+    // the volume is constant for any factor
+    for (float al = 0.58f; al <= 1.5f; al += 0.04f) CHECK(fabsf(al * squash_across(al) * squash_across(al) - 1.0f) < 1e-5f, "volume changes at %f", al);
+}
+
+static void test_ball_xform(void)
+{
+    printf("ball transform\n");
+    const Quaternion id = QuaternionIdentity();
+    const Vector3 normals[3] = { { 0, 1, 0 }, Vector3Normalize((Vector3){ 0.0f, 1.0f, -0.33f }), Vector3Normalize((Vector3){ -0.2f, 1.0f, 0.4f }) };
+
+    for (int k = 0; k < 3; k++) {
+        const Vector3 n = normals[k];
+        // axis scale: n -> n * along, anything perpendicular -> 1 / sqrt(along), determinant 1
+        for (float al = 0.6f; al <= 1.35f; al += 0.15f) {
+            const Matrix m = ball_xform_axis_scale(n, al);
+            const Vector3 pn = Vector3Transform(n, m);
+            CHECK(Vector3Distance(pn, Vector3Scale(n, al)) < 1e-4f, "axis scale: n did not become n * %f", al);
+            Vector3 perp = Vector3CrossProduct(n, (Vector3){ 1.0f, 0.0f, 0.0f });
+            if (Vector3Length(perp) < 0.1f) perp = Vector3CrossProduct(n, (Vector3){ 0.0f, 0.0f, 1.0f });
+            perp = Vector3Normalize(perp);
+            CHECK(fabsf(Vector3Length(Vector3Transform(perp, m)) - squash_across(al)) < 1e-4f, "axis scale: across factor wrong at %f", al);
+            CHECK(fabsf(MatrixDeterminant(m) - 1.0f) < 1e-4f, "axis scale changes the volume at %f (det %f)", al, MatrixDeterminant(m));
+        }
+
+        // the squashed ball keeps touching the ground where the round one did: the lowest point along -n stays at -R
+        for (float e = -0.42f; e <= 0.30f; e += 0.12f) {
+            const float lift = e * (float)DR_BALL_R;
+            const Matrix m = ball_xform(id, n, n, 1.0f + e, 1.0f, lift, 0.0f);
+            float lowest = 1e9f;
+            for (int i = 0; i <= 40; i++) for (int j = 0; j < 80; j++) {
+                const float th = (float)i / 40.0f * (float)DR_PI, ph = (float)j / 80.0f * 2.0f * (float)DR_PI;
+                const Vector3 p = { sinf(th) * cosf(ph) * (float)DR_BALL_R, cosf(th) * (float)DR_BALL_R, sinf(th) * sinf(ph) * (float)DR_BALL_R };
+                const float d = Vector3DotProduct(Vector3Transform(p, m), n);
+                if (d < lowest) lowest = d;
+            }
+            CHECK(fabsf(lowest + (float)DR_BALL_R) < 0.01f, "squashed ball (e %.2f) bottom is %f from the ground contact", e, lowest + (float)DR_BALL_R);
+        }
+    }
+
+    // order of operations: the move comes last, so it is not scaled; and bx lands exactly
+    const Matrix m = ball_xform(id, (Vector3){ 0, 1, 0 }, (Vector3){ 0, 0, -1 }, 0.7f, 1.2f, -0.3f, 5.0f);
+    const Vector3 o = Vector3Transform((Vector3){ 0, 0, 0 }, m);
+    CHECK(Vector3Distance(o, (Vector3){ 5.0f, -0.3f, 0.0f }) < 1e-5f, "the centre moved to (%f, %f, %f), wanted (5, -0.3, 0)", o.x, o.y, o.z);
+
+    // spin is applied before the squash: a rotation does not change what the squash does to the silhouette
+    const Quaternion spin = QuaternionFromAxisAngle(Vector3Normalize((Vector3){ 0.3f, 0.2f, 0.9f }), 1.1f);
+    const Matrix ms = ball_xform(spin, (Vector3){ 0, 1, 0 }, (Vector3){ 0, 0, -1 }, 0.6f, 1.0f, 0.0f, 0.0f);
+    float top = -1e9f, wide = -1e9f;
+    for (int i = 0; i <= 40; i++) for (int j = 0; j < 80; j++) {
+        const float th = (float)i / 40.0f * (float)DR_PI, ph = (float)j / 80.0f * 2.0f * (float)DR_PI;
+        const Vector3 p = Vector3Transform((Vector3){ sinf(th) * cosf(ph), cosf(th), sinf(th) * sinf(ph) }, ms);
+        if (p.y > top) top = p.y;
+        if (fabsf(p.x) > wide) wide = fabsf(p.x);
+    }
+    CHECK(fabsf(top - 0.6f) < 0.01f, "squashed to 0.6 the ball is %f tall", top);
+    CHECK(fabsf(wide - squash_across(0.6f)) < 0.01f, "squashed to 0.6 the ball is %f wide, wanted %f", wide, squash_across(0.6f));
 }
 
 int main(void)
@@ -218,6 +413,8 @@ int main(void)
     test_terrain_render();
     test_grass();
     test_meshes();
+    test_squash();
+    test_ball_xform();
     printf("\n%d checks, %d failed\n", g_checks, g_fail);
     return g_fail ? 1 : 0;
 }

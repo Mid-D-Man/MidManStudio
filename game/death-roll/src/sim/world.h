@@ -24,6 +24,11 @@ typedef struct {
     float  h;             // height above the ground (m)
     uint8_t type;
     bool   destroyed;     // smashed through with a shield
+    // Looks only: the sim never reads these three (collisions use x, s, r, h and type). They come from their own hash salts, so
+    // adding them did not move a single obstacle.
+    uint8_t variant;      // which tree / rock mesh: 0..DR_TREE_VARIANTS-1 or 0..DR_ROCK_VARIANTS-1
+    float  yaw;           // turn about the vertical axis (radians), so one mesh does not look the same everywhere
+    float  stretch;       // rocks only: 0.88..1.14, widens one horizontal axis and narrows the other (area stays the same)
 } Obstacle;
 
 typedef struct {

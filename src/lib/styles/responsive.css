@@ -56,10 +56,6 @@
   .grid-2 {
     grid-template-columns: repeat(2, 1fr);
   }
-
-  .media-gallery-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /* ---------- ≥1024px ---------- */
@@ -82,10 +78,6 @@
 
   .about-grid {
     grid-template-columns: 1.1fr 0.9fr;
-  }
-
-  .media-gallery-grid {
-    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -115,8 +107,10 @@
   grid-template-columns: 1fr;
 }
 
+/* The showcase is a real grid at every width: as many 300px-or-wider tiles as fit (1 on a phone, 2 on a tablet, 3 on a desktop
+   or in a phone's "desktop site" mode), so the GIFs and clips sit side by side instead of in one long column. */
 .media-gallery-grid {
   display: grid;
   gap: var(--sp-3);
-  grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+}

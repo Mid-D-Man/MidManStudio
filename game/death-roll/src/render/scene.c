@@ -1,6 +1,8 @@
 #include "scene.h"
 #include "shaders.h"
 #include "meshes.h"
+#include "squash.h"
+#include "ball_xform.h"
 #include "terrain_render.h"
 #include "../sim/terrain.h"
 #include "../sim/world.h"
@@ -13,10 +15,13 @@
 typedef struct {
     Shaders   sh;
     Material  mat_world, mat_ball, mat_ground;
-    Mesh      ball, tree, rock;
+    Mesh      ball;
+    Mesh      tree[DR_TREE_VARIANTS], rock[DR_ROCK_VARIANTS];
     Texture2D ball_tex, grass_tex;
     TerrainRender terrain;
     Quaternion spin;
+    Squash     squash;              // the ball's cartoon squash and stretch: looks only, nothing reads it back into the sim
+    bool       was_grounded;
     float shake, cam_dy, look_dy, back, ahead, t;
     SceneStats stats;
 } Scene;
@@ -38,8 +43,8 @@ void scene_init(void)
     S.ball_tex = meshes_build_ball_texture();
     S.grass_tex = meshes_build_grass_texture();
     S.ball = GenMeshSphere((float)DR_BALL_R, 24, 32);
-    S.tree = meshes_build_tree();
-    S.rock = meshes_build_rock();
+    for (int i = 0; i < DR_TREE_VARIANTS; i++) S.tree[i] = meshes_build_tree_variant(i);
+    for (int i = 0; i < DR_ROCK_VARIANTS; i++) S.rock[i] = meshes_build_rock_variant(i);
 
     S.mat_world = LoadMaterialDefault();
     S.mat_ball  = LoadMaterialDefault();
@@ -50,6 +55,8 @@ void scene_init(void)
 
     terrain_render_init(&S.terrain);
     S.spin = QuaternionIdentity();
+    squash_reset(&S.squash);
+    S.was_grounded = true;
 }
 
 // ---- camera numbers depend on orientation: a portrait phone sees a narrow slice, so the camera sits further back/higher
@@ -68,6 +75,8 @@ void scene_reset(const Game *g)
     S.look_dy = 0.0f;
     S.shake = 0.0f;
     S.spin = QuaternionIdentity();
+    squash_reset(&S.squash);
+    S.was_grounded = g->ball.grounded;
     terrain_render_invalidate(&S.terrain);
     terrain_render_update(&S.terrain, g->ball.s, 0);
     S.stats.chunks_rebuilt = S.terrain.rebuilt_total;
@@ -100,8 +109,31 @@ void scene_update(const Game *g, float dt, uint32_t events, bool portrait)
         S.spin = QuaternionNormalize(QuaternionMultiply(q, S.spin));
     }
 
+    // squash and stretch: reads the ball's state, changes only how the mesh is drawn
+    {
+        SquashInput in;
+        in.grounded = b->grounded;
+        in.launched = (events & GE_LAUNCH) != 0 || (S.was_grounded && !b->grounded);
+        in.landed   = (events & GE_LAND) != 0   || (!S.was_grounded && b->grounded);
+        in.hit      = (events & GE_SHIELD_HIT) != 0;
+        in.died     = (events & GE_DEATH) != 0;
+        in.speed    = sqrtf(vx * vx + vs * vs + (float)(b->vy * b->vy));
+        in.impact   = (float)b->last_impact;
+        in.vel[0] = vx; in.vel[1] = (float)b->vy; in.vel[2] = -vs;
+        squash_update(&S.squash, dt, &in);
+        S.was_grounded = b->grounded;
+    }
+
     terrain_render_update(&S.terrain, b->s, 2);                                 // at most two chunks per frame
     S.stats.chunks_rebuilt = S.terrain.rebuilt_total;
+}
+
+// The ground's unit normal under the ball, in render space (forward is -z, so the sim's slope along s flips sign).
+static Vector3 ground_normal(const Ball *b)
+{
+    double gx, gs;
+    terrain_gradient(b->x, b->s, &gx, &gs);
+    return Vector3Normalize((Vector3){ (float)-gx, 1.0f, (float)gs });
 }
 
 static void draw_obstacles(Game *g)
@@ -117,11 +149,16 @@ static void draw_obstacles(Game *g)
             if (o->s < b->s - S.back + 1.0 || o->s > b->s + 285.0) continue;      // behind the camera / past the fog
             const float gy = (float)(terrain_height(o->x, o->s) - b->y);
             const float px = (float)o->x, pz = (float)(-(o->s - b->s));
+            const Matrix yaw = MatrixRotateY(o->yaw);
             if (o->type == OBS_TREE) {
                 const float sxz = (o->r * 1.25f) / 0.30f;
-                DrawMesh(S.tree, S.mat_world, MatrixMultiply(MatrixScale(sxz, o->h, sxz), MatrixTranslate(px, gy, pz)));
+                const Mesh m = S.tree[o->variant % DR_TREE_VARIANTS];
+                DrawMesh(m, S.mat_world, MatrixMultiply(MatrixMultiply(yaw, MatrixScale(sxz, o->h, sxz)), MatrixTranslate(px, gy, pz)));
             } else {
-                DrawMesh(S.rock, S.mat_world, MatrixMultiply(MatrixScale(o->r, o->h * 0.6f, o->r), MatrixTranslate(px, gy + o->h * 0.4f, pz)));
+                const Mesh m = S.rock[o->variant % DR_ROCK_VARIANTS];
+                const float wx = sqrtf(o->stretch), wz = 1.0f / wx;      // widen one horizontal axis, narrow the other: same area
+                DrawMesh(m, S.mat_world, MatrixMultiply(MatrixMultiply(yaw, MatrixScale(o->r * wx, o->h * 0.6f, o->r * wz)),
+                                                        MatrixTranslate(px, gy + o->h * 0.4f, pz)));
             }
             drawn++;
         }
@@ -130,7 +167,7 @@ static void draw_obstacles(Game *g)
 }
 
 // A soft dark disc on the ground under the ball, following the ground's shape: the only depth cue while airborne.
-static void draw_shadow(const Ball *b)
+static void draw_shadow(const Ball *b, float widen)
 {
     enum { N = 14 };
     const double ground = terrain_height(b->x, b->s);
@@ -139,6 +176,7 @@ static void draw_shadow(const Ball *b)
     if (alpha < 0.12f) alpha = 0.12f;
     float rad = (float)DR_BALL_R * (1.0f + 0.04f * alt);
     if (rad > 2.2f) rad = 2.2f;
+    rad *= widen;                                                // a squashed ball sits wider on the ground
 
     Vector3 ring[N + 1];
     for (int i = 0; i <= N; i++) {
@@ -187,10 +225,19 @@ void scene_draw3d(Game *g, int sw, int sh)
 
     terrain_render_draw(&S.terrain, S.mat_ground, b->y, b->s);
     draw_obstacles(g);
-    draw_shadow(b);
+    const float along_n = squash_along_normal(&S.squash);
+    draw_shadow(b, along_n < 1.0f ? squash_across(along_n) : 1.0f);
+
+    // The ball: spin first (the texture rolls), then the squash along the ground normal and the stretch along the direction of
+    // travel in WORLD axes, then move it so the squashed ball still touches the ground where the real, round one does. The sim
+    // never sees any of this: the ball it collides and rolls is still a sphere of DR_BALL_R at (x, y, s).
+    const Vector3 n = ground_normal(b);
+    const Vector3 dir = { S.squash.dir[0], S.squash.dir[1], S.squash.dir[2] };
+    const float lift = squash_anchor(&S.squash) * (float)DR_BALL_R;
+    const Matrix ball_m = ball_xform(S.spin, n, dir, along_n, squash_along_motion(&S.squash), lift, bx);
 
     shaders_use_light(&S.sh, true);
-    DrawMesh(S.ball, S.mat_ball, MatrixMultiply(QuaternionToMatrix(S.spin), MatrixTranslate(bx, 0.0f, 0.0f)));
+    DrawMesh(S.ball, S.mat_ball, ball_m);
     shaders_use_light(&S.sh, false);
 
     rlEnableBackfaceCulling();

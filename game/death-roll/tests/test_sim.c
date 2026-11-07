@@ -325,6 +325,58 @@ static void test_steering(void)
     free(g);
 }
 
+// ---- 8. the looks of obstacles: valid, repeatable, spread as intended, and not part of the rules --------------------------
+static void test_looks(void)
+{
+    printf("obstacle looks\n");
+    static const int tree_mix[DR_TREE_VARIANTS] = { 30, 18, 16, 14, 12, 10 };
+    static const int rock_mix[DR_ROCK_VARIANTS] = { 22, 14, 16, 10, 14, 8, 10, 6 };
+    int tree_n[DR_TREE_VARIANTS] = { 0 }, rock_n[DR_ROCK_VARIANTS] = { 0 }, trees = 0, rocks = 0;
+    World *a = (World *)malloc(sizeof *a), *b = (World *)malloc(sizeof *b);
+
+    for (uint32_t seed = 1; seed <= 8; seed++) {
+        terrain_set_seed(seed); world_reset(a);
+        for (int k = 0; k < 600; k++) {
+            const WorldCell *c = world_cell(a, k);
+            for (int i = 0; i < c->count; i++) {
+                const Obstacle *o = &c->obs[i];
+                CHECK(o->yaw >= 0.0f && o->yaw < 2.0f * (float)DR_PI + 1e-4f, "yaw %f out of range", (double)o->yaw);
+                if (o->type == OBS_TREE) {
+                    CHECK(o->variant < DR_TREE_VARIANTS, "tree variant %d out of range", o->variant);
+                    CHECK(o->stretch == 1.0f, "a tree was stretched (%f)", (double)o->stretch);
+                    if (o->variant < DR_TREE_VARIANTS) tree_n[o->variant]++;
+                    trees++;
+                } else {
+                    CHECK(o->variant < DR_ROCK_VARIANTS, "rock variant %d out of range", o->variant);
+                    CHECK(o->stretch >= 0.879f && o->stretch <= 1.141f, "rock stretch %f out of 0.88..1.14", (double)o->stretch);
+                    if (o->variant < DR_ROCK_VARIANTS) rock_n[o->variant]++;
+                    rocks++;
+                }
+            }
+        }
+        // generated again from scratch (after the cache is dropped and refilled in a different order) it looks the same
+        terrain_set_seed(seed); world_reset(b);
+        for (int k = 599; k >= 0; k -= 3) {
+            const WorldCell *cb = world_cell(b, k), *ca = world_cell(a, k);
+            if (ca->index != k) continue;   // already evicted from the cache of `a`: nothing to compare
+            CHECK(cb->count == ca->count, "cell %d count differs on regeneration", k);
+            for (int i = 0; i < cb->count && i < ca->count; i++)
+                CHECK(cb->obs[i].variant == ca->obs[i].variant && cb->obs[i].yaw == ca->obs[i].yaw && cb->obs[i].stretch == ca->obs[i].stretch &&
+                      cb->obs[i].x == ca->obs[i].x && cb->obs[i].r == ca->obs[i].r, "cell %d obstacle %d changed on regeneration", k, i);
+        }
+    }
+    printf("  %d trees, %d rocks\n", trees, rocks);
+    for (int v = 0; v < DR_TREE_VARIANTS; v++) {
+        const double pct = 100.0 * tree_n[v] / (trees ? trees : 1);
+        CHECK(tree_n[v] > 0 && fabs(pct - tree_mix[v]) < 3.0, "tree variant %d is %.1f%% of trees, wanted about %d%%", v, pct, tree_mix[v]);
+    }
+    for (int v = 0; v < DR_ROCK_VARIANTS; v++) {
+        const double pct = 100.0 * rock_n[v] / (rocks ? rocks : 1);
+        CHECK(rock_n[v] > 0 && fabs(pct - rock_mix[v]) < 3.0, "rock variant %d is %.1f%% of rocks, wanted about %d%%", v, pct, rock_mix[v]);
+    }
+    free(a); free(b);
+}
+
 int main(void)
 {
     test_determinism();
@@ -335,6 +387,7 @@ int main(void)
     test_ramps();
     test_collisions();
     test_steering();
+    test_looks();
     printf("\n%d checks, %d failed\n", g_checks, g_fail);
     return g_fail ? 1 : 0;
 }

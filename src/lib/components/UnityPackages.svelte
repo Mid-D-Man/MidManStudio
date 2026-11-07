@@ -34,17 +34,13 @@
               <p class="package-scope">{pkg.scope}</p>
             </div>
             {#if pkg.media}
-              <div class="media-slot package-media" class:package-media--filled={!!pkg.media.src}>
-                {#if pkg.media.src}
-                  <img
-                    src={pkg.media.src}
-                    alt={pkg.media.alt ?? `${pkg.name} in action`}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                {:else}
-                  <span class="media-slot__label">{pkg.media.label ?? 'Image · coming soon'}</span>
-                {/if}
+              <div class="media-slot package-media package-media--filled">
+                <img
+                  src={pkg.media.src}
+                  alt={pkg.media.alt ?? `${pkg.name} in action`}
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
             {/if}
           </div>

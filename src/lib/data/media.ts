@@ -9,7 +9,7 @@
 //                  plays the GIF while it is on screen (GifMedia.svelte). A GIF entry without a poster renders as a plain image.
 //   video       -> put the file in static/media/videos/ and add an entry with
 //                  type: 'video', src: '/media/videos/<file>.mp4', optional poster
-// An entry with no `src` renders as a labelled "coming soon" slot.
+// Every entry needs a real `src`: the gallery shows no empty placeholder cards.
 
 export type MediaKind = 'gameplay' | 'mdix-studio' | 'mdix-lsp' | 'screenshot' | 'concept-art';
 export type MediaFilterId = MediaKind | 'all';
@@ -21,7 +21,7 @@ export interface MediaItem {
   kind: MediaKind;
   /** Defaults to 'image'. 'gif' with a poster plays only while on screen; without a poster it renders like an image. */
   type?: MediaType;
-  src?: string;
+  src: string;
   /** Still frame: shown before a video plays, and in place of a GIF whenever it is not playing. */
   poster?: string;
   alt?: string;
@@ -276,13 +276,5 @@ export const mediaItems: MediaItem[] = [
     'msx-3', 'Msx_showcase_3', 'MSX — SVG to MSX converter', 'screenshot',
     'Looping capture of the MSX converter: SVG source on the left, the converted MSX source on the right, and the original and converted animations of a blue square and two circles below, with a playback bar.',
     422, 264
-  ),
-
-  // ---- Coming soon (clips and further captures) ----
-  { id: 'studio-gif', title: 'MDIX Studio — in action', kind: 'mdix-studio', type: 'gif' },
-  { id: 'm1', title: 'Projectile System — reconciliation demo', kind: 'gameplay', type: 'video' },
-  { id: 'm3', title: 'Hierarchy Arranger in action', kind: 'screenshot' },
-  { id: 'm4', title: 'MSX vector render — dual-buffer OIT', kind: 'screenshot' },
-  { id: 'm5', title: 'Concept pass — enemy silhouette set', kind: 'concept-art' },
-  { id: 'm6', title: 'Auto Reference — fuzzy matcher UI', kind: 'screenshot' }
+  )
 ];

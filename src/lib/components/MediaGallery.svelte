@@ -7,6 +7,9 @@
   // Content lives in $lib/data/media.ts — add images, GIFs and clips there.
   let active = $state<MediaFilterId>('all');
 
+  // Only offer a filter that has something to show.
+  const filters = mediaFilters.filter((f) => f.id === 'all' || mediaItems.some((i) => i.kind === f.id));
+
   const visible = $derived(
     active === 'all' ? mediaItems : mediaItems.filter((i) => i.kind === active)
   );
@@ -24,7 +27,7 @@
     </p>
 
     <div class="gallery-filters reveal" use:reveal role="group" aria-label="Filter the showcase">
-      {#each mediaFilters as f (f.id)}
+      {#each filters as f (f.id)}
         <button
           class="filter-chip"
           class:active={active === f.id}
@@ -39,8 +42,8 @@
     <div class="media-gallery-grid">
       {#each visible as item, i (item.id)}
         <figure class="gallery-item reveal" use:reveal style="transition-delay: {(i % 3) * 80}ms">
-          <div class="media-slot gallery-media" class:gallery-media--filled={!!item.src}>
-            {#if item.src && item.type === 'video'}
+          <div class="media-slot gallery-media gallery-media--filled">
+            {#if item.type === 'video'}
               <!-- svelte-ignore a11y_media_has_caption -->
               <video
                 src={item.src}
@@ -52,7 +55,7 @@
                 controls
                 preload="metadata"
               ></video>
-            {:else if item.src && item.type === 'gif' && item.poster}
+            {:else if item.type === 'gif' && item.poster}
               <GifMedia
                 src={item.src}
                 poster={item.poster}
@@ -61,7 +64,7 @@
                 width={item.width}
                 height={item.height}
               />
-            {:else if item.src}
+            {:else}
               <a href={item.src} target="_blank" rel="noopener noreferrer" class="gallery-link">
                 <img
                   src={item.src}
@@ -72,10 +75,6 @@
                   decoding="async"
                 />
               </a>
-            {:else}
-              <span class="media-slot__label">
-                {item.type === 'video' ? 'Video' : item.type === 'gif' ? 'GIF' : 'Image'} · coming soon
-              </span>
             {/if}
           </div>
           <figcaption class="gallery-caption">{item.title}</figcaption>

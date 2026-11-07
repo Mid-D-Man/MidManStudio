@@ -2,6 +2,20 @@
 #include "terrain.h"
 #include <limits.h>
 
+// Picks an index from a table of percentages that add up to 100, from a unit random number.
+static uint8_t pick_variant(double u, const uint8_t *percent, int n)
+{
+    int acc = 0;
+    const double v = u * 100.0;
+    for (int i = 0; i < n; i++) { acc += percent[i]; if (v < acc) return (uint8_t)i; }
+    return (uint8_t)(n - 1);
+}
+
+// How common each look is. Trees: spruce, tall pine, oval green, autumn, birch, bare. Rocks: grey boulder, warm boulder, slate
+// mesa, mossy mesa, grey spire, warm spire, shard cluster, mossy twin boulders.
+static const uint8_t TREE_MIX[DR_TREE_VARIANTS] = { 30, 18, 16, 14, 12, 10 };
+static const uint8_t ROCK_MIX[DR_ROCK_VARIANTS] = { 22, 14, 16, 10, 14, 8, 10, 6 };
+
 double world_difficulty(double s) { return dr_clamp(s / 6000.0, 0.0, 1.0); }
 double world_safe_halfwidth(double d) { return 3.8 - 1.0 * d; }
 
@@ -55,6 +69,10 @@ static void gen_cell(WorldCell *c, int k, bool empty)
         o->x = ox; o->s = os; o->r = r; o->h = h;
         o->type = rock ? OBS_ROCK : OBS_TREE;
         o->destroyed = false;
+        o->variant = rock ? pick_variant(dr_unit(dr_hash3(ku, 0x600u + iu, seed)), ROCK_MIX, DR_ROCK_VARIANTS)
+                          : pick_variant(dr_unit(dr_hash3(ku, 0x600u + iu, seed)), TREE_MIX, DR_TREE_VARIANTS);
+        o->yaw = (float)(dr_unit(dr_hash3(ku, 0x700u + iu, seed)) * 2.0 * DR_PI);
+        o->stretch = rock ? (float)(0.88 + 0.26 * dr_unit(dr_hash3(ku, 0x800u + iu, seed))) : 1.0f;
     }
 }
 

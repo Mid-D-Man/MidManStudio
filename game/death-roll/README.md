@@ -2,7 +2,7 @@
 
 A one-thumb downhill game for the MidManStudio portfolio. You are a big ball with the studio logo on it, rolling down an endless procedural slope: hills to ride, ramps to launch off, trees and rocks to dodge. **One hit ends the run** (shields, when they arrive, soak a hit instead). C99 + raylib, built to WebAssembly; the whole game is meant to stay well under 1 MB with no art files except one 256 px logo.
 
-Working title. Status: milestone 1-3 (the core loop). See *Roadmap*.
+Working title. Status: milestone 1-3 (the core loop), plus variety in the props and a cartoon squash-and-stretch ball (see *Variety and the cartoon ball*). See *Roadmap*.
 
 ## Controls (and how they are gated)
 
@@ -34,13 +34,40 @@ main.c                    window, main loop, run state (menu / run / crashed)
 src/platform/platform.h   the ONE place that knows the platform; capability macros, always defined, used as #if DR_x
 src/sim/                  plain C, no raylib: terrain, ball physics, obstacle generation, rules (headless-testable)
 src/input/                device-gated steering
-src/render/               shaders, chunk meshes, scene (camera, props, shadow, ball)
+src/render/               shaders, chunk meshes, the tree and rock meshes, scene (camera, props, shadow, ball)
+src/render/squash.c       the ball's squash and stretch (plain maths, no raylib, never read by the sim)
+src/render/ball_xform.c   builds the ball's draw matrix from the squash (tested on its own)
 src/ui/hud.c              menus and HUD, laid out from the screen size and orientation
 src/storage/              best distance: browser localStorage on the web, a file elsewhere (failures are swallowed)
 raylib/src/shell.html     the page around the game (build-web.sh passes it to emcc)
 assets/logo.png           the only asset; the ball's texture is composed from it at start-up
 tests/                    headless tests
 ```
+
+## Variety and the cartoon ball
+
+**Trees (6) and rocks (8).** Every obstacle gets a look from its own hash salts (`variant`, `yaw`, and for rocks a `stretch` that widens one axis and narrows the other), so the same seed always gives the same forest and adding looks did not move a single obstacle (checked with a placement fingerprint over 12 seeds x 14 km). The collision only knows `x, s, r, h` and the type: every mesh stays inside the same footprint and height, so a tall pine, a bare tree or a spire is exactly as dangerous as the spruce. The mix is set in `src/sim/world.c` (`TREE_MIX`, `ROCK_MIX`, percentages) and the shapes in `src/render/meshes.c`.
+
+| Trees | | Rocks | |
+| --- | --- | --- | --- |
+| 0 spruce (30 %) | the original two-cone tree | 0 grey boulder (22 %) | the original rock |
+| 1 tall pine (18 %) | four slim tiers, cooler green | 1 warm boulder (14 %) | sandstone |
+| 2 oval green (16 %) | broadleaf on a trunk | 2 slate mesa (16 %) | steep sides, flat top |
+| 3 autumn (14 %) | the same in orange | 3 mossy mesa (10 %) | green top faces |
+| 4 birch (12 %) | pale trunk, two leaf clumps | 4 grey spire (14 %) | leaning point |
+| 5 bare tree (10 %) | thick trunk, six branches | 5 warm spire (8 %) | leaning the other way |
+| | | 6 shard cluster (10 %) | three shards |
+| | | 7 mossy twins (6 %) | a big and a small boulder |
+
+To add a look: raise `DR_TREE_VARIANTS` / `DR_ROCK_VARIANTS` in `src/sim/sim_common.h`, add a `case` in `meshes_build_tree_variant` / `meshes_build_rock_variant`, and add its percentage to the mix table (it must still add up to 100). The tests check every mesh's footprint, height and that no two variants are the same mesh.
+
+**Squash and stretch.** The ball looks like a cartoon ball but is exactly the same ball to the game: `src/render/squash.c` only *reads* what the sim did (on the ground or not, speed, how hard the last landing was, the launch / land / hit / death events) and the scene draws the ball mesh with a few scale factors. Nothing flows back, and `tests/run_tests.sh` fails if the sim files ever mention a look-only field or the squash files include a sim header.
+
+* **Landing**: snaps flat along the ground's normal (depth grows with impact speed, up to 58 % of its height), then overshoots tall, wobbles and settles like jelly (an under-damped spring, about a third of a second per wobble).
+* **Take-off**: a stretch pop. **In the air**: stretched along the direction of travel, more the faster it goes (up to 28 %). **On the ground**: a hint of speed stretch (up to 5 %).
+* **Shield hit and death**: their own squash.
+* The squash is measured along the ground's normal, and the ball is moved by the same amount, so a squashed ball still touches the slope at the same point (tested numerically) and never sinks in or hovers. The volume is constant. The shadow widens as the ball flattens.
+* Tuning: the constants at the top of `squash.c` (`SQ_OMEGA` speed of the wobble, `SQ_ZETA` how bouncy, the clamps) and the amounts in `squash_update`.
 
 ## Tuning
 
@@ -54,9 +81,9 @@ This game lives inside the portfolio repo, in `game/death-roll/`, and builds str
 sh game/death-roll/build-web.sh
 ```
 
-That runs the same `emcc` command mray runs (needs emscripten and raylib's web build; raylib is looked up in `~/raylib-test/raylib`, override with `RAYLIB=...`) and writes `index.html`, `index.js`, `index.wasm` and `index.data` to `static/play/death-roll/`. Commit that folder; the site serves it at `/play/death-roll/`. To try it first: `cd static/play/death-roll && python3 -m http.server 8080`, and add `?debug` to the URL for the overlay.
+That runs the same `emcc` command mray runs (needs emscripten and raylib's web build; raylib is looked up in `~/raylib-test/raylib`, override with `RAYLIB=...`) and writes `index.html`, `index.js`, `index.wasm` and `index.data` to `static/play/death-roll/`. The deploy workflow (`.github/workflows/deploy.yml`) does exactly this on every push (emscripten and raylib 6.2 in CI), so you do not have to commit that folder; run it by hand only to try a build on the phone. The site serves it at `/play/death-roll/`. To try it first: `cd static/play/death-roll && python3 -m http.server 8080`, and add `?debug` to the URL for the overlay.
 
-The studio page embeds it in its **Play** section (`src/lib/components/PlayGame.svelte`): a click-to-play iframe of `/play/death-roll/`, same origin as the page so the saved best distance is not partitioned away. Until that folder is committed the section shows a "Web build coming soon" poster, and it becomes playable by itself afterwards.
+The studio page embeds it in its **Play** section (`src/lib/components/PlayGame.svelte`): a click-to-play iframe of `/play/death-roll/`, same origin as the page so the saved best distance is not partitioned away. If the folder is missing (a local run of the site without a game build) the section shows a "Web build coming soon" poster and becomes playable by itself once it exists.
 
 ## Tests
 
@@ -66,7 +93,7 @@ sh game/death-roll/tests/platform_check.sh   # every file as desktop and as web 
 ```
 Point `RAYLIB_SRC` at raylib's headers if they are not in `~/raylib-test/raylib/src`. The test files are empty translation units unless built with their `-D` flag, so a build that compiles every `.c` never sees a second `main()`.
 
-The simulation tests play thousands of metres with bots: a lane-following bot never dies over 12 seeds x 20 km; a ramp bot launches and lands safely; shields absorb a hit; a crashed ball comes to rest. The render tests run the real mesh-building code with raylib's GPU calls stubbed: every triangle faces up, chunks stream correctly for 20 km at 2 rebuilds a frame, nothing handed to the GPU is large.
+The simulation tests play thousands of metres with bots: a lane-following bot never dies over 12 seeds x 20 km; a ramp bot launches and lands safely; shields absorb a hit; a crashed ball comes to rest. The render tests run the real mesh-building code with raylib's GPU calls stubbed: every triangle faces up, chunks stream correctly for 20 km at 2 rebuilds a frame, nothing handed to the GPU is large, every tree and rock variant fits its footprint and height and differs from the others, the squash spring settles, stays bounded and does not depend on the frame rate, and the ball's matrix keeps the contact point on the ground and the volume constant.
 
 **Not yet verified:** anything that needs a GL context or a touchscreen (the look, the fog, the feel of the drag stick, frame rate on a phone, rotating the device). That is what the first run on the phone is for; the debug overlay says whether both shaders compiled.
 

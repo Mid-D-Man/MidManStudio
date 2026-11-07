@@ -3,16 +3,14 @@
 // Source: MidManStudio_Unity monorepo (packages/), plus MDIX Studio (com.midmanstudio.mdix),
 // which lives in the DixScript-Rust repo — its repoPath is prefixed with that repo's name.
 //
-// `media` is optional: only a card that has a media field gets a screenshot / GIF slot.
-// Leave it off for packages with nothing visual to show. To fill the slot later, add `src`
-// (a file under static/media/images/, e.g. '/media/images/packages/projectile.gif').
+// `media` is optional: only a card that has a media field shows a screenshot / GIF next to its name.
+// Leave it off for packages with nothing visual to show (there are no empty placeholder slots).
+// To add one, set `media: { src: '/media/images/packages/projectile.gif', alt: '...' }`.
 
 export interface PackageMedia {
-  /** Image or GIF path under static/media/. Omit to show a "coming soon" slot. */
-  src?: string;
+  /** Image or GIF path under static/media/. */
+  src: string;
   alt?: string;
-  /** Placeholder text shown while there is no `src`. */
-  label?: string;
 }
 
 export interface UnityPackage {
@@ -142,7 +140,6 @@ export const unityPackages: UnityPackage[] = [
     ],
     tech: ['Unity', 'Rust', 'NGO'],
     status: 'active-dev',
-    repoPath: 'packages/com.midmanstudio.projectilesystem',
-    media: { label: 'GIF · coming soon' }
+    repoPath: 'packages/com.midmanstudio.projectilesystem'
   }
 ];

@@ -21,6 +21,8 @@
 #define DR_HILL_AMP     3.0     // height of the rolling hills (m)
 #define DR_RAMP_CELL    90.0    // ramps are decided once per 90 m of slope
 #define DR_CELL_LEN     24.0    // obstacles are generated per 24 m cell
+#define DR_TREE_VARIANTS 6      // different tree shapes/colours (render/meshes.c builds one mesh for each)
+#define DR_ROCK_VARIANTS 8      // different rock shapes/colours
 
 // ---- the ball (tuning) ----------------------------------------------------------------------------------------------
 #define DR_BALL_R       1.0     // radius (m)
